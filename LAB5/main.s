@@ -71,20 +71,25 @@ __main	PROC
 st	LDR r1, [r0],#4
 	LDR r2, =GPIOE_BASE
 	LDR r3, [r2, #GPIO_ODR]
+	LDR r4,=0x20000024
+	CMP r0, r4
+	BEQ reset
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, r1
 	STR r3, [r2, #GPIO_ODR]
 	B delay
 	
-delay 	PUSH{r1,r2,r3}
-		LDR r0,= 0xC3500
+delay 	PUSH{r0,r1,r2,r3}
+		LDR r0,= 0xC350
 subin	SUB r0, r0, #1		
 		CMP r0, #0x0
-		BEQ st
+		BEQ p
 		BNE subin
-		
+p		POP{r0,r1,r2,r3}
+		B st
 	
-
+reset	LDR r0, = steps
+		B st
 
 
 	ENDP
