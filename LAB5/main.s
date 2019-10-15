@@ -64,7 +64,7 @@ __main	PROC
 	ORR r1, r1, r2
 	STR r1, [r0, #GPIO_PUPDR]
 	
-	LDR r0,=#0x20000000
+	LDR r0,=0x20000000
 	
 	
 
