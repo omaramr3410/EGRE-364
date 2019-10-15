@@ -64,12 +64,26 @@ __main	PROC
 	ORR r1, r1, r2
 	STR r1, [r0, #GPIO_PUPDR]
 	
-	LDR r0,=0x20000000
+	LDR r0,=steps
 	
 	
 
 st	LDR r1, [r0],#4
-	B st
+	LDR r2, =GPIOE_BASE
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, r1
+	STR r3, [r2, #GPIO_ODR]
+	B delay
+	
+delay 	PUSH{r1,r2,r3}
+		LDR r0,= 0xC3500
+subin	SUB r0, r0, #1		
+		CMP r0, #0x0
+		BEQ st
+		BNE subin
+		
+	
 
 
 
