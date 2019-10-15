@@ -80,9 +80,9 @@ st	LDR r1, [r0],#4
 	B delay
 	
 delay 	PUSH{r0,r1,r2,r3}
-		LDR r0,= 0xC350
-subin	SUB r0, r0, #1		
-		CMP r0, #0x0
+		LDR r10,=3000
+subin	SUB r10, r10, #1		
+		CMP r10, #0x0
 		BEQ p
 		BNE subin
 p		POP{r0,r1,r2,r3}
@@ -90,6 +90,19 @@ p		POP{r0,r1,r2,r3}
 	
 reset	LDR r0, = steps
 		B st
+A3Check LDR r4, =GPIOA_BASE 
+		 LDR r5,[r4,#GPIO_IDR]
+		 LDR r6, =0x28
+		 AND r7,r6,r4
+		 CMP r7,#0x8
+		 BEQ incspeed
+		 BNE A3Check
+		 
+		 
+		 
+incspeed SUB r10, #1500
+		 B st	
+
 
 
 	ENDP
