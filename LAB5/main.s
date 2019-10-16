@@ -75,6 +75,7 @@ st	LDR r1, [r0],#4
 	LDR r4,=0x20000024
 	CMP r0, r4
 	BEQ reset
+	BL A3Check
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, r1
 	STR r3, [r2, #GPIO_ODR]
@@ -91,16 +92,15 @@ p		POP{r0,r1,r2,r3}
 	
 reset	LDR r0, =steps
 		B st
+		
 A3Check LDR r4, =GPIOA_BASE 
 		 LDR r5,[r4,#GPIO_IDR]
 		 LDR r6, =0x28
 		 AND r7,r6,r4
 		 CMP r7,#0x8
 		 BEQ incspeed
-		 BNE A3Check
-		 
-		 
-		 
+		 BNE st
+		 	 
 incspeed	LDR r4, =GPIOA_BASE 
 			LDR r5,[r4,#GPIO_IDR]
 			LDR r6, =0x28
@@ -108,7 +108,8 @@ incspeed	LDR r4, =GPIOA_BASE
 			CMP r7,#0x8
 			BEQ subn
 			BNE st
-subn			SUB r10, #500
+			
+subn		SUB r10, #1000
 			 	
 
 A5Check LDR r4, =GPIOA_BASE 
@@ -138,5 +139,5 @@ addn			ADD r10, #500
 	AREA    myData, DATA, READWRITE
 	ALIGN
 steps	DCD   0x1<<12, 0x3<<12, 0x1<<13,0x3<<13, 0x1<<14, 0x3<<14, 0x1<<15,0x9<<12
-delayvar DCD 1500
+delayv DCD 1500
 	END
