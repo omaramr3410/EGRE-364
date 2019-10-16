@@ -19,6 +19,7 @@
 	
 	AREA    main, CODE, READONLY
 	EXPORT	__main				; make __main visible to linker
+	;EXPORT processname
 		
 	ENTRY	
     
@@ -80,7 +81,7 @@ st	LDR r1, [r0],#4
 	B delay
 	
 delay 	PUSH{r0,r1,r2,r3}
-		LDR r10,=3000
+		LDR r10,=1500
 subin	SUB r10, r10, #1		
 		CMP r10, #0x0
 		BEQ p
@@ -88,7 +89,7 @@ subin	SUB r10, r10, #1
 p		POP{r0,r1,r2,r3}
 		B st
 	
-reset	LDR r0, = steps
+reset	LDR r0, =steps
 		B st
 A3Check LDR r4, =GPIOA_BASE 
 		 LDR r5,[r4,#GPIO_IDR]
@@ -100,12 +101,38 @@ A3Check LDR r4, =GPIOA_BASE
 		 
 		 
 		 
-incspeed SUB r10, #1500
-		 B st	
+incspeed	LDR r4, =GPIOA_BASE 
+			LDR r5,[r4,#GPIO_IDR]
+			LDR r6, =0x28
+			AND r7,r6,r4
+			CMP r7,#0x8
+			BEQ subn
+			BNE st
+subn			SUB r10, #500
+			 	
 
+A5Check LDR r4, =GPIOA_BASE 
+		 LDR r5,[r4,#GPIO_IDR]
+		 LDR r6, =0x28
+		 AND r7,r6,r4
+		 CMP r7,#0x2
+		 BEQ decspeed
+		 BNE A5Check
+		 
+		 
+		 
+decspeed	LDR r4, =GPIOA_BASE 
+			LDR r5,[r4,#GPIO_IDR]
+			LDR r6, =0x28
+			AND r7,r6,r4
+			CMP r7,#0x2
+			BEQ addn
+			BNE st
+addn			ADD r10, #500
 
 
 	ENDP
+
 
 		
 	AREA    myData, DATA, READWRITE
