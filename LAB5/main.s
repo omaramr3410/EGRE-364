@@ -138,4 +138,5 @@ addn			ADD r10, #500
 	AREA    myData, DATA, READWRITE
 	ALIGN
 steps	DCD   0x1<<12, 0x3<<12, 0x1<<13,0x3<<13, 0x1<<14, 0x3<<14, 0x1<<15,0x9<<12
+delayvar DCD 1500
 	END
