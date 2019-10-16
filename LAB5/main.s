@@ -65,8 +65,8 @@ __main	PROC
 	ORR r1, r1, r2
 	STR r1, [r0, #GPIO_PUPDR]
 	
-	LDR r0,=steps
-	
+	LDR r0,=steps ; loads array 
+	LDR r12, =1200
 	
 
 st	LDR r1, [r0],#4
@@ -74,15 +74,29 @@ st	LDR r1, [r0],#4
 	LDR r3, [r2, #GPIO_ODR]
 	LDR r4,=0x20000024
 	CMP r0, r4
-	BEQ reset
-	BL A3Check
+	BEQ reset	
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, r1
 	STR r3, [r2, #GPIO_ODR]
-	B delay
+	LDR r4, =GPIOA_BASE 
+	LDR r5,[r4,#GPIO_IDR]
+	LDR r6, =0x28
+	AND r7,r6,r4
+	CMP r7,#0x8
+	BEQ incspeed
+return1	
+	LDR r4, =GPIOA_BASE 
+	LDR r5,[r4,#GPIO_IDR]
+	LDR r6, =0x28
+	AND r7,r6,r4
+	CMP r7,#0x2
+	BEQ decspeed
+return2
+	
+	B delay 
 	
 delay 	PUSH{r0,r1,r2,r3}
-		LDR r10,=1500
+		LDR r10,=2000
 subin	SUB r10, r10, #1		
 		CMP r10, #0x0
 		BEQ p
@@ -98,8 +112,8 @@ A3Check LDR r4, =GPIOA_BASE
 		 LDR r6, =0x28
 		 AND r7,r6,r4
 		 CMP r7,#0x8
-		 BEQ incspeed
-		 BNE st
+		 BEQ st
+		 BNE incspeed
 		 	 
 incspeed	LDR r4, =GPIOA_BASE 
 			LDR r5,[r4,#GPIO_IDR]
@@ -109,7 +123,8 @@ incspeed	LDR r4, =GPIOA_BASE
 			BEQ subn
 			BNE st
 			
-subn		SUB r10, #1000
+subn		SUB r10, #5
+			B delay 
 			 	
 
 A5Check LDR r4, =GPIOA_BASE 
@@ -129,8 +144,8 @@ decspeed	LDR r4, =GPIOA_BASE
 			CMP r7,#0x2
 			BEQ addn
 			BNE st
-addn			ADD r10, #500
-
+addn			ADD r10, #5
+				BX LR
 
 	ENDP
 
@@ -139,5 +154,5 @@ addn			ADD r10, #500
 	AREA    myData, DATA, READWRITE
 	ALIGN
 steps	DCD   0x1<<12, 0x3<<12, 0x1<<13,0x3<<13, 0x1<<14, 0x3<<14, 0x1<<15,0x9<<12
-delayv DCD 1500
+delayvar DCD  0x3E8 ; sets delay variable to 1000
 	END
