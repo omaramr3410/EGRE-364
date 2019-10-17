@@ -66,11 +66,11 @@ __main	PROC
 	STR r1, [r0, #GPIO_PUPDR]
 	
 	LDR r0,=steps ; loads array 
-	LDR r12, =1200
-	LDR r11, =4000
-	LDR r10, =400
+	LDR r12, =1200 ; base delay var
+	LDR r11, =4000 ; delay max
+	LDR r10, =400  ; delay min
 
-st	LDR r1, [r0],#8
+st	LDR r1, [r0],#4
 	LDR r2, =GPIOE_BASE
 	LDR r3, [r2, #GPIO_ODR]
 	LDR r4,=0x20000024
@@ -159,9 +159,16 @@ decspeed	LDR r4, =GPIOA_BASE
 			CMP r7,#0x2
 			BEQ addn
 			BNE st
+			
 addn		
-			ADD r10, #5
-			BX LR
+			CMP r11,r12
+			BGE checkcond
+			BLT return2
+checkcond	CMP r12,r10
+			BGE addr
+			BLT return2	
+addr		ADD r10, #5
+			B return2
 
 	ENDP
 
