@@ -67,41 +67,50 @@ __main	PROC
 	
 	LDR r0,=steps ; loads array 
 	LDR r12, =1200
-	
+	LDR r11, =4000
+	LDR r10, =400
 
-st	LDR r1, [r0],#4
+st	LDR r1, [r0],#8
 	LDR r2, =GPIOE_BASE
 	LDR r3, [r2, #GPIO_ODR]
 	LDR r4,=0x20000024
 	CMP r0, r4
-	BEQ reset	
+	BEQ reset
+	BNE ret3	
 ret3	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, r1
 	STR r3, [r2, #GPIO_ODR]
 	LDR r4, =GPIOA_BASE 
 	LDR r5,[r4,#GPIO_IDR]
-	LDR r6, =0x28
-	AND r7,r6,r4
+	LDR r6, =0x8
+	AND r7,r6,r5
 	CMP r7,#0x8
 	BEQ incspeed
+	BNE return1
 return1	
 	LDR r4, =GPIOA_BASE 
 	LDR r5,[r4,#GPIO_IDR]
-	LDR r6, =0x28
+	LDR r6, =0x20
 	AND r7,r6,r4
 	CMP r7,#0x2
 	BEQ decspeed
+	BNE return2
 return2
 	
 	B delay 
 	
-delay 	PUSH{r0,r1,r2,r3}
-		LDR r12,=1200
-subin	SUB r12, r12, #1		
+delay 	PUSH{r0,r1,r2,r3,r12}
+		;LDR r12,=1200
+subin	SUB r12, r12, #1
+		LDR r2, =GPIOE_BASE
+		LDR r3, [r2, #GPIO_ODR]	
+		BIC r3, r3, #(0x1<<10)
+		ORR r3,r3,#(0x1<<10)
+		STR r3, [r2, #GPIO_ODR]
 		CMP r12, #0x0
 		BEQ p
 		BNE subin
-p		POP{r0,r1,r2,r3}
+p		POP{r0,r1,r2,r3,r12}
 		B st
 	
 reset	LDR r0, =steps
@@ -123,8 +132,14 @@ incspeed	LDR r4, =GPIOA_BASE
 			BEQ subn
 			BNE return1
 			
-subn		SUB r12, #500
-			B incspeed
+subn		CMP r11,r12
+			BLT check2
+			BGE return1
+check2		CMP r12,r10
+			BGE go
+			BLT return2
+go			SUB r12, #500
+			B return1
 			 	
 
 A5Check LDR r4, =GPIOA_BASE 
@@ -144,8 +159,9 @@ decspeed	LDR r4, =GPIOA_BASE
 			CMP r7,#0x2
 			BEQ addn
 			BNE st
-addn			ADD r10, #5
-				BX LR
+addn		
+			ADD r10, #5
+			BX LR
 
 	ENDP
 
