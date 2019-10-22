@@ -136,28 +136,28 @@ half
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
-	LDR r2, =GPIOE_BASE     ; 
+	LDR r2, =GPIOE_BASE     ; step 5
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, #(0x1<<14)
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
-	LDR r2, =GPIOE_BASE
+	LDR r2, =GPIOE_BASE		; step 6
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, #(0x3<<14)
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
-	LDR r2, =GPIOE_BASE
+	LDR r2, =GPIOE_BASE     ; step 7 
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, #(0x1<<15)
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
-	LDR r2, =GPIOE_BASE
+	LDR r2, =GPIOE_BASE     ; step 8 
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, #(0x9<<12)
@@ -225,10 +225,7 @@ decspeed
 		MOV r12,r11
 		B delay
 		 
-
-
-
-	ENDP
+ENDP
 
 
 		
@@ -236,4 +233,4 @@ decspeed
 	ALIGN
 steps	DCD   0x1<<12, 0x3<<12, 0x1<<13,0x3<<13, 0x1<<14, 0x3<<14, 0x1<<15,0x9<<12
 delaymin DCD  0x190 ; sets delay variable to 400
-	END
+	END	
