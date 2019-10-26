@@ -75,42 +75,42 @@ __main	PROC
 
 full
 	LDR r2, =GPIOE_BASE
-	LDR r3, [r2, #GPIO_ODR]
-	BIC r3, r3, #(0xF<<12)
-	ORR r3, r3, #(0x1<<12)
+	LDR r3, [r2, #GPIO_ODR]; step 1
+	BIC r3, r3, #(0xF<<12) ; clear 4 bits 
+	ORR r3, r3, #(0x1<<12) ; Set PE12
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
-	LDR r2, =GPIOE_BASE
+	LDR r2, =GPIOE_BASE      ; step 2
 	LDR r3, [r2, #GPIO_ODR]
-	BIC r3, r3, #(0xF<<12)
-	ORR r3, r3, #(0x1<<13)
+	BIC r3, r3, #(0xF<<12) ; clear 4 bits 
+	ORR r3, r3, #(0x1<<13)  ; Set PE13
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
-	
-	LDR r2, =GPIOE_BASE
+	 
+	LDR r2, =GPIOE_BASE    ; step 3
 	LDR r3, [r2, #GPIO_ODR]
-	BIC r3, r3, #(0xF<<12)
-	ORR r3, r3, #(0x1<<14)
+	BIC r3, r3, #(0xF<<12)  ; clear 4 bits 
+	ORR r3, r3, #(0x1<<14)  ; Set PE14
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 		
-	LDR r2, =GPIOE_BASE
+	LDR r2, =GPIOE_BASE      ; step 4
 	LDR r3, [r2, #GPIO_ODR]
-	BIC r3, r3, #(0xF<<12)
-	ORR r3, r3, #(0x1<<15)
+	BIC r3, r3, #(0xF<<12) ; clear 4 bits 
+	ORR r3, r3, #(0x1<<15)  ; Set PE15
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
-	BL checkA12
-	BL checkA35
+	BL checkA12  ; checks if left or right button is pressed, switch between full or half subroutine 
+	BL checkA35  ; checks if up or down button pressed and manipulates the speed
 	
 	BL full
 
 half
 	LDR r2, =GPIOE_BASE     ; step 1 
 	LDR r3, [r2, #GPIO_ODR]
-	BIC r3, r3, #(0xF<<12)
+	BIC r3, r3, #(0xF<<12)  
 	ORR r3, r3, #(0x1<<12)
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
