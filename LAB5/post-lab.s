@@ -72,6 +72,8 @@ __main	PROC
 	
 	B full
 
+; post lab - acheived by implementing reverse order of steps for full and half step process and branch back and forth
+
 
 full
 	LDR r2, =GPIOE_BASE
@@ -105,7 +107,7 @@ full
 	BL checkA12  ; checks if left or right button is pressed, switch between full or half subroutine 
 	BL checkA35  ; checks if up or down button pressed and manipulates the speed
 	
-	BL full
+	BL fullreverse
 
 half
 	LDR r2, =GPIOE_BASE     ; step 1 
@@ -161,6 +163,105 @@ half
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	ORR r3, r3, #(0x9<<12) ; sets PE12, 15
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	BL checkA12
+	BL checkA35
+	
+	BL halfreverse
+ 
+ ;reversed order of steps of full step
+fullreverse
+	LDR r2, =GPIOE_BASE
+	LDR r3, [r2, #GPIO_ODR]; step 1
+	BIC r3, r3, #(0xF<<12) ; clear 4 bits 
+	ORR r3, r3, #(0x1<<15)  ; Set PE15 
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE      ; step 2
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12) ; clear 4 bits 
+	ORR r3, r3, #(0x1<<14)  ; Set PE14  
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	 
+	LDR r2, =GPIOE_BASE    ; step 3
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)  ; clear 4 bits 
+	ORR r3, r3, #(0x1<<13)  ; Set PE13
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+		
+	LDR r2, =GPIOE_BASE      ; step 4
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12) ; clear 4 bits 
+	ORR r3, r3, #(0x1<<12) ; Set PE12
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	BL checkA12  ; checks if left or right button is pressed, switch between full or half subroutine 
+	BL checkA35  ; checks if up or down button pressed and manipulates the speed
+	
+	BL full
+
+
+;reversed order of steps of half step
+halfreverse
+	LDR r2, =GPIOE_BASE     ; step 1 
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)  
+	ORR r3, r3, #(0x9<<12) ; sets PE12,15
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE     ; step 2
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x1<<15) ; sets PE15
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE     ; step 3
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x3<<14)  ; sets PE14,15
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE     ; step 4
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x1<<14) ; sets PE14
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE     ; step 5
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x3<<13) ; sets PE13,14
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE		; step 6
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x1<<13) ; sets PE13
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE     ; step 7 
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x3<<12)  ; sets PE12,13
+	STR r3, [r2, #GPIO_ODR]
+	BL delay 
+	
+	LDR r2, =GPIOE_BASE     ; step 8 
+	LDR r3, [r2, #GPIO_ODR]
+	BIC r3, r3, #(0xF<<12)
+	ORR r3, r3, #(0x1<<12)  ; sets PE12
 	STR r3, [r2, #GPIO_ODR]
 	BL delay 
 	
