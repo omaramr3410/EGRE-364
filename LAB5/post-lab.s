@@ -207,7 +207,7 @@ fullreverse
 	BL full
 
 
-;reversed order of steps of full step
+;reversed order of steps of half step
 halfreverse
 	LDR r2, =GPIOE_BASE     ; step 1 
 	LDR r3, [r2, #GPIO_ODR]
