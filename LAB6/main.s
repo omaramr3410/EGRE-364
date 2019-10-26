@@ -22,48 +22,55 @@
 				
 __main	PROC
 	
-    ; Enable the clock to GPIO Port E	
+    ; Enable the clock to GPIO Port D	
+	LDR r0, =RCC_BASE
+	LDR r1, [r0, #RCC_AHB2ENR]
+	ORR r1, r1, #RCC_AHB2ENR_GPIODEN
+	STR r1, [r0, #RCC_AHB2ENR]
+
+	; MODE: 00: Input mode, 01: General purpose output mode
+    ;       10: Alternate function mode, 11: Analog mode (reset state)
+	LDR r0, =GPIOD_BASE
+	LDR r1, [r0, #GPIO_MODER]
+	BIC r1, r1, #(0xF<<(2*5))
+	ORR r1, r1, #(0xA<<(2*5))
+	STR r1, [r0, #GPIO_MODER]
+	
+	LDR r1, [r0, #GPIO_AFR0]
+	ORR r1, r1, #(0x77<<(4*5))
+	STR r1, [r0, #GPIO_AFR0]
+
+	LDR r1, [r0, #GPI0_OSPEEDR]
+	ORR r1, r1, #(0xF<<(2*5))
+	STR r1, [r0, #GPIO_OSPEEDR]
+	
+	LDR r1, [r0, #GPIO_OTYPER]
+	BIC r1, r1, #(0x1<<5)
+	ORR r1, r1, #(0x<<6)
+	STR r1, [r0, #GPIO_OTYPER]
+	
+	LDR r1, [r0, #GPIO_PUPDR]
+	BIC r1, r1, #(0xF<<(2*5))
+	STR r1, [r0, #GPIO_PUPDR]
+	
+	
+	; Enable the clock to GPIO Port E	
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
 	ORR r1, r1, #RCC_AHB2ENR_GPIOEEN
 	STR r1, [r0, #RCC_AHB2ENR]
 
-	; MODE: 00: Input mode, 01: General purpose output mode
-    ;       10: Alternate function mode, 11: Analog mode (reset state)
 	LDR r0, =GPIOE_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	LDR r2, =0xFFF00000
-	LDR r3, =0x55500000
-	BIC r1, r1,  r2
-	ORR r1, r1,  r3
+	BIC r1, r1, #(0xF<<(2*10))
+	ORR r1, r1, #(0xA<<(2*5))
 	STR r1, [r0, #GPIO_MODER]
 	
 	
-	LDR r0, =RCC_BASE
-	LDR r1, [r0, #RCC_AHB2ENR]
-	ORR r1, r1, #RCC_AHB2ENR_GPIOHEN
-	STR r1, [r0, #RCC_AHB2ENR]
-	
-	LDR r0, =GPIOH_BASE
-	LDR r1, [r0, #GPIO_MODER]
-	BIC r1, r1,  #(0x3)
-	ORR r1, r1,  #(0x1)
-	STR r1, [r0, #GPIO_MODER]
-	
-	
-		
-	;Output 0 
-	LDR r0, =GPIOE_BASE
-	LDR r1, [r0, #GPIO_ODR]
-	BIC r1, r1,  #(0x00<<10)
-	ORR r1, r1,  #(0x3F<<10)
-	STR r1, [r0, #GPIO_ODR]
 	
 	
 	
 	
-	
-  
 stop 	B 		stop     		; dead loop & program hangs here
 
 	ENDP
