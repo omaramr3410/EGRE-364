@@ -120,17 +120,12 @@ __main	PROC
 	BIC r1, r1, #(0xFF)
 	STR r1, [r0, #GPIO_PUPDR]
 	
-	
-	
-	
-	
 start	
 	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	STR r3, [r2, #GPIO_ODR]
-	LDR r9, = 50000
-	B delaya
+	BL delay 
 	
 checkcols	
 	LDR r4, =GPIOA_BASE 
@@ -139,12 +134,7 @@ checkcols
 	AND r7,r6,r5
 	CMP r7,#(0xF)
 	BEQ start
-	BL delaya ; button pressed 
-	
-delaya CMP r9, #0
-	   SUB r9,r9,#1
-	   BNE delaya
-	   B checkcols
+	BL delay
 test1110
 	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
