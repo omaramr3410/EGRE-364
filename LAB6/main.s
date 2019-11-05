@@ -238,6 +238,7 @@ cols2
 	BEQ pressed4 ; button 4 pressed
 	
 
+
 cols3
 	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
@@ -313,7 +314,7 @@ cols4
 
 pressedA
 	LDR r12, =0x41
-	
+	BL write
 	B start
 
 pressed3
@@ -392,6 +393,21 @@ pressedstar
 	B start
 	
 
+
+write 
+	LDR r10, =USART2_BASE
+	LDR r11, [r10, #USART_CR1]
+	BIC r11, r11,  #USART_CR1_M
+	STR r11, 
+	LDR r11, {r11,  #USART_CR2}
+	BIC r1
+	
+
+LDR r0, =GPIOD_BASE
+	LDR r1, [r0, #GPIO_MODER]
+	BIC r1, r1, #(0xF<<(2*5))
+	ORR r1, r1, #(0xA<<(2*5))
+	STR r1, [r0, #GPIO_MODER]
 	
 	
 	
