@@ -135,6 +135,12 @@ checkcols
 	CMP r7,#(0xF)
 	BEQ start
 	BL delay
+
+delay  MOV r9,r12
+delaya CMP r9, #0
+	   SUB r9,r9,#1
+	   BNE delaya
+	   BX LR
 test1110
 	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
