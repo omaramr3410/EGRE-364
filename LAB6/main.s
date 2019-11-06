@@ -22,7 +22,30 @@
 				
 __main	PROC
 	
+	LDR r0, =RCC_BASE
+	LDR r1, [r0, #RCC_CR]
+	ORR r1, r1, #RCC_CR_MSION
+	STR r1, [r0, #RCC_CR]
+	LDR r1, [r0, #RCC_CFGR]
+	BIC r1, r1, #RCC_CFGR_SW
+	STR r1, [r0, #RCC_CFGR]
+	BL msiwait
+	LDR r2, [r0, #RCC_CR]
+	BIC r2, r2, #RCC_CR_MSIRANGE
+	ORR r2, r2, #RCC_CR_MSIRANGE_7
+	ORR r2, r2, #RCC_CR_MSIRGSEL
+	STR r2, [r0, #RCC_CR]
+	BL msiwait
+	B cont
+	
+msiwait	LDR  r1, [r0, #RCC_CR]
+		AND r1, r1, #RCC_CR_MSIRDY
+		CMP r1, #(0x0)
+		BEQ msiwait
+		BNE drop
+drop	BX LR
     ; Enable the clock to GPIO Port D	
+cont
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_AHB2ENR]
 	ORR r1, r1, #RCC_AHB2ENR_GPIODEN
@@ -31,40 +54,33 @@ __main	PROC
 	LDR r1, [r0, #RCC_APB1ENR1]
 	ORR r1, r1, #RCC_APB1ENR1_USART2EN
 	STR r1, [r0, #RCC_APB1ENR1]
+	
 
 	; MODE: 00: Input mode, 01: General purpose output mode
     ;       10: Alternate function mode, 11: Analog mode (reset state)
 	LDR r0, =GPIOD_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	BIC r1, r1, #(0xF<<(2*5))
-	ORR r1, r1, #(0xA<<(2*5))
+	BIC r1, r1, #(0x0F<<(2*5))
+	ORR r1, r1, #(0x0A<<(2*5))
 	STR r1, [r0, #GPIO_MODER]
-	
 	LDR r1, [r0, #GPIO_AFR0]
 	ORR r1, r1, #(0x77<<(4*5))
 	STR r1, [r0, #GPIO_AFR0]
-
 	LDR r1, [r0, #GPIO_OSPEEDR]
-	ORR r1, r1, #(0xF<<(2*5))
+	ORR r1, r1, #(0x0F<<(2*5))
 	STR r1, [r0, #GPIO_OSPEEDR]
-	
 	LDR r1, [r0, #GPIO_OTYPER]
-	BIC r1, r1, #(0x1<<5)
-	ORR r1, r1, #(0x1<<6)
+	BIC r1, r1, #(0x01<<5)
+	ORR r1, r1, #(0x01<<6)
 	STR r1, [r0, #GPIO_OTYPER]
-	
 	LDR r1, [r0, #GPIO_PUPDR]
-	BIC r1, r1, #(0xF<<(2*5))
+	BIC r1, r1, #(0x0F<<(2*5))
 	STR r1, [r0, #GPIO_PUPDR]
 	
 	LDR r0, = USART2_BASE
 	LDR r1, [r0, #USART_CR1]
-	LDR r2, = USART_CR1_RE
 	BIC r1, r1, #USART_CR1_M
 	BIC r1, r1, #USART_CR1_OVER8
-	ORR r1, r1, #USART_CR1_UE
-	ORR r2, r2, #USART_CR1_TE
-	ORR r1, r1, r2
 	STR r1, [r0, #USART_CR1]
 	LDR r1, [r0, #USART_CR2]
 	BIC r1, r1, #USART_CR2_STOP
@@ -73,21 +89,12 @@ __main	PROC
 	LDR r3, = 9600
 	SDIV r1, r2, r3
 	STR r1, [r0, #USART_BRR]
-	LDR r0, =RCC_BASE
-	LDR r1, [r0, #RCC_CR]
-	ORR r1, r1, #RCC_CR_MSION
-	STR r1, [r0, #RCC_CR]
-	LDR r1, [r0, #RCC_CFGR]
-	BIC r1, r1, #RCC_CFGR_SW
-	STR r1, [r0, #RCC_CFGR]
-	LDR r2, [r0, #RCC_CR]
-	BIC r2, r2, #RCC_CR_MSIRANGE
-	ORR r2, r2, #RCC_CR_MSIRANGE_7
-	ORR r2, r2, #RCC_CR_MSIRGSEL
-	STR r2, [r0, #RCC_CR]
-
-
-	
+	LDR r1, [r0, #USART_CR1]
+	ORR r1, r1, #USART_CR1_UE
+	LDR r2, = USART_CR1_RE
+	ORR r2, r2, #USART_CR1_TE
+	ORR r1, r1, r2
+	STR r1, [r0, #USART_CR1]
 	
 	; Enable the clock to GPIO Port E	
 	LDR r0, =RCC_BASE
@@ -118,28 +125,29 @@ __main	PROC
 	
 	LDR r1, [r0, #GPIO_PUPDR]
 	BIC r1, r1, #(0xFF)
+	ORR r1, r1, #(0xAA)
 	STR r1, [r0, #GPIO_PUPDR]
 	
 st	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
 	BIC r3, r3, #(0xF<<12)
 	STR r3, [r2, #GPIO_ODR]
-	LDR r9, = 500000
+	LDR r9, = 5000
 	LDR r4, = (0x1<<12)
 	B delayst
 checkcols	LDR r2, =GPIOA_BASE
 			LDR r5,[r2,#GPIO_IDR]
-			LDR r6, =0xF
+			LDR r6, =0xf
 			AND r7,r6,r5
 			CMP r7,#(0x0)
 			BEQ set
-			CMP r7,#(0x1)
-			BEQ col1
-			CMP r7,#(0x2)
-			BEQ col2
-			CMP r7,#(0x4)
-			BEQ col3
 			CMP r7,#(0x8)
+			BEQ col1
+			CMP r7,#(0x4)
+			BEQ col2
+			CMP r7,#(0x2)
+			BEQ col3
+			CMP r7,#(0x1)
 			BEQ col4
 			B st
 	
@@ -152,7 +160,7 @@ set	LDR r2, =GPIOE_BASE
 	STR r3, [r2, #GPIO_ODR]
 	CMP r11, #0
 	BEQ st
-	LDR r9, = 500000
+	LDR r9, = 5000
 	B delayst
 
 col1 	CMP r11, #(0x1<<12)
@@ -163,6 +171,7 @@ col1 	CMP r11, #(0x1<<12)
 		BEQ psev
 		CMP r11, #(0x1<<15)
 		BEQ pstar
+		B st
 col2 	CMP r11, #(0x1<<12)
 		BEQ ptwo
 		CMP r11, #(0x1<<13)
@@ -171,6 +180,7 @@ col2 	CMP r11, #(0x1<<12)
 		BEQ pate
 		CMP r11, #(0x1<<15)
 		BEQ pzero
+		B st
 col3 	CMP r11, #(0x1<<12)
 		BEQ pthree
 		CMP r11, #(0x1<<13)
@@ -179,6 +189,7 @@ col3 	CMP r11, #(0x1<<12)
 		BEQ pnine
 		CMP r11, #(0x1<<15)
 		BEQ phash
+		B st
 col4 	CMP r11, #(0x1<<12)
 		BEQ pA
 		CMP r11, #(0x1<<13)
@@ -187,6 +198,7 @@ col4 	CMP r11, #(0x1<<12)
 		BEQ p_C
 		CMP r11, #(0x1<<15)
 		BEQ pD
+		B st
 
 
 	
@@ -200,38 +212,38 @@ pB	LDR r12, =0x42
 	B write
 pA	LDR r12, =0x41
 	B write
-pthree	LDR r12, =0x3
+pthree	LDR r12, =0x33
 	B write
-ptwo	LDR r12, =0x2
+ptwo	LDR r12, =0x32
 	B write
-pone	LDR r12, =0x1
+pone	LDR r12, =0x31
 	B write
-psix	LDR r12, =0x6
+psix	LDR r12, =0x36
 	B write
-pfive	LDR r12, =0x5
+pfive	LDR r12, =0x35
 	B write
-pfour	LDR r12, =0x4
+pfour	LDR r12, =0x34
 	B write
 p_C	LDR r12, =0x43
 	B write
-pnine	LDR r12, =0x9
+pnine	LDR r12, =0x39
 	B write
-pate	LDR r12, =0x8
+pate	LDR r12, =0x38
 	B write
-psev	LDR r12, =0x7
+psev	LDR r12, =0x37
 	B write
 pD	LDR r12, =0x44
 	B write
 phash	LDR r12, =0x23
 	B write
-pzero	LDR r12, =0x0
+pzero	LDR r12, =0x30
 	B write
 pstar	LDR r12, =0x2A
 	B write	
 write	LDR r0, = USART2_BASE
 		LDR r1, [r0, #USART_ISR]
 		AND r1, r1, #USART_ISR_TXE
-		CMP r1, #0
+		CMP r1, #USART_ISR_TXE
 		BEQ setTDR
 		BNE write
 setTDR	LDR r0, = USART2_BASE
