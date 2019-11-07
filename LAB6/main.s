@@ -142,14 +142,59 @@ checkcols	LDR r2, =GPIOA_BASE
 			CMP r7,#(0x0)
 			BEQ set
 			CMP r7,#(0x8)
-			BEQ col1
+			LDR r8, =0x8
+			BEQ GoDeb
 			CMP r7,#(0x4)
-			BEQ col2
+			LDR r8, =0x4
+			BEQ GoDeb
 			CMP r7,#(0x2)
-			BEQ col3
+			LDR r8, =0x2
+			BEQ GoDeb
 			CMP r7,#(0x1)
-			BEQ col4
+			LDR r8, =0x1
+			BEQ GoDeb
 			B st
+GoDeb	CMP r8, #0x8
+		BEQ db8
+		CMP r8, #0x4
+		BEQ db4
+		CMP r8, #0x2
+		BEQ db2
+		CMP r8, #0x1
+		BEQ db1
+db8	LDR r9, = 10000
+	BL delay
+	LDR r2, =GPIOA_BASE
+	LDR r5,[r2,#GPIO_IDR]
+	AND r5,r8,r5
+	CMP r5, r8
+	BEQ db8
+	BNE col1
+
+db4	LDR r9, = 10000
+	BL delay
+	LDR r2, =GPIOA_BASE
+	LDR r5,[r2,#GPIO_IDR]
+	AND r5,r8,r5
+	CMP r5, r8
+	BEQ db4
+	BNE col2
+db2	LDR r9, = 10000
+	BL delay
+	LDR r2, =GPIOA_BASE
+	LDR r5,[r2,#GPIO_IDR]
+	AND r5,r8,r5
+	CMP r5, r8
+	BEQ db2
+	BNE col3
+db1	LDR r9, = 10000
+	BL delay
+	LDR r2, =GPIOA_BASE
+	LDR r5,[r2,#GPIO_IDR]
+	AND r5,r8,r5
+	CMP r5, r8
+	BEQ db1
+	BNE col4
 	
 set	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
@@ -206,7 +251,10 @@ delayst	SUB r9,r9,#1
 		CMP r9, #0
 		BNE delayst
 		B checkcols
-		
+delay	SUB r9,r9,#1
+		CMP r9, #0
+		BNE delay
+		BX LR
 
 pB	LDR r12, =0x42
 	B write
