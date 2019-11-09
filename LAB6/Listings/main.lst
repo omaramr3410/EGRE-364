@@ -34625,355 +34625,449 @@ ARM Macro Assembler    Page 533
    22 00000000         
    23 00000000         __main  PROC
    24 00000000         
-   25 00000000 48B3            LDR              r0, =RCC_BASE
-   26 00000002 6801            LDR              r1, [r0, #RCC_CR]
-   27 00000004 F041 0101       ORR              r1, r1, #RCC_CR_MSION
-   28 00000008 6001            STR              r1, [r0, #RCC_CR]
-   29 0000000A 6881            LDR              r1, [r0, #RCC_CFGR]
-   30 0000000C F021 0103       BIC              r1, r1, #RCC_CFGR_SW
-   31 00000010 6081            STR              r1, [r0, #RCC_CFGR]
-   32 00000012 F000 F80B       BL               msiwait
-   33 00000016 6802            LDR              r2, [r0, #RCC_CR]
-   34 00000018 F022 02F0       BIC              r2, r2, #RCC_CR_MSIRANGE
-   35 0000001C F042 0270       ORR              r2, r2, #RCC_CR_MSIRANGE_7
-   36 00000020 F042 0208       ORR              r2, r2, #RCC_CR_MSIRGSEL
-   37 00000024 6002            STR              r2, [r0, #RCC_CR]
-   38 00000026 F000 F801       BL               msiwait
-   39 0000002A E006            B                cont
-   40 0000002C         
-   41 0000002C 6801    msiwait LDR              r1, [r0, #RCC_CR]
-   42 0000002E F001 0102       AND              r1, r1, #RCC_CR_MSIRDY
+   25 00000000         ; Select MSI as the clock source of System Clock
+   26 00000000 48B3            LDR              r0, =RCC_BASE
+   27 00000002 6801            LDR              r1, [r0, #RCC_CR]
+   28 00000004 F041 0101       ORR              r1, r1, #RCC_CR_MSION
+   29 00000008 6001            STR              r1, [r0, #RCC_CR]
+   30 0000000A 6881            LDR              r1, [r0, #RCC_CFGR]
+   31 0000000C F021 0103       BIC              r1, r1, #RCC_CFGR_SW
+   32 00000010 6081            STR              r1, [r0, #RCC_CFGR]
+   33 00000012 F000 F80B       BL               msiwait     ; Wait until MSI is
+                                                             ready
+   34 00000016 6802            LDR              r2, [r0, #RCC_CR]
+   35 00000018 F022 02F0       BIC              r2, r2, #RCC_CR_MSIRANGE
+   36 0000001C F042 0270       ORR              r2, r2, #RCC_CR_MSIRANGE_7 ; MS
+                                                            IRANGE can be modif
+                                                            ied when MSI is OFF
+                                                             (MSION=0) or when 
+                                                            MSI is ready (MSIRD
+                                                            Y=1).
 
 
 
 ARM Macro Assembler    Page 534 
 
 
-   43 00000032 2900            CMP              r1, #(0x0)
-   44 00000034 D0FA            BEQ              msiwait
-   45 00000036 D1FF            BNE              drop
-   46 00000038 4770    drop    BX               LR
-   47 0000003A         ; Enable the clock to GPIO Port D 
-   48 0000003A         cont
-   49 0000003A 48A5            LDR              r0, =RCC_BASE
-   50 0000003C 6CC1            LDR              r1, [r0, #RCC_AHB2ENR]
-   51 0000003E F041 0108       ORR              r1, r1, #RCC_AHB2ENR_GPIODEN
-   52 00000042 64C1            STR              r1, [r0, #RCC_AHB2ENR]
-   53 00000044 48A2            LDR              r0, =RCC_BASE
-   54 00000046 6D81            LDR              r1, [r0, #RCC_APB1ENR1]
-   55 00000048 F441 3100       ORR              r1, r1, #RCC_APB1ENR1_USART2EN
-   56 0000004C 6581            STR              r1, [r0, #RCC_APB1ENR1]
-   57 0000004E         
-   58 0000004E         
-   59 0000004E         ; MODE: 00: Input mode, 01: General purpose output mode
-   60 0000004E         ;       10: Alternate function mode, 11: Analog mode (re
+   37 00000020         ; The MSIRGSEL bit in RCC-CR select which MSIRANGE is us
+                       ed. 
+   38 00000020         ; If MSIRGSEL is 0, the MSIRANGE in RCC_CSR is used to s
+                       elect the MSI clock range.  (This is the default)
+   39 00000020         ; If MSIRGSEL is 1, the MSIRANGE in RCC_CR is used. 
+   40 00000020 F042 0208       ORR              r2, r2, #RCC_CR_MSIRGSEL
+   41 00000024 6002            STR              r2, [r0, #RCC_CR]
+   42 00000026 F000 F801       BL               msiwait     ; Enable MSI and wa
+                                                            it until it's ready
+                                                             
+   43 0000002A E006            B                cont
+   44 0000002C         
+   45 0000002C 6801    msiwait LDR              r1, [r0, #RCC_CR]
+   46 0000002E F001 0102       AND              r1, r1, #RCC_CR_MSIRDY
+   47 00000032 2900            CMP              r1, #(0x0)
+   48 00000034 D0FA            BEQ              msiwait
+   49 00000036 D1FF            BNE              drop
+   50 00000038 4770    drop    BX               LR
+   51 0000003A         ; Enable the clock to GPIO Port D 
+   52 0000003A         cont
+   53 0000003A 48A5            LDR              r0, =RCC_BASE
+   54 0000003C 6CC1            LDR              r1, [r0, #RCC_AHB2ENR]
+   55 0000003E F041 0108       ORR              r1, r1, #RCC_AHB2ENR_GPIODEN
+   56 00000042 64C1            STR              r1, [r0, #RCC_AHB2ENR]
+   57 00000044 48A2            LDR              r0, =RCC_BASE
+   58 00000046 6D81            LDR              r1, [r0, #RCC_APB1ENR1]
+   59 00000048 F441 3100       ORR              r1, r1, #RCC_APB1ENR1_USART2EN 
+                                                            ; Enable the clock 
+                                                            of USART 2
+   60 0000004C 6581            STR              r1, [r0, #RCC_APB1ENR1]
+   61 0000004E         
+   62 0000004E         
+   63 0000004E         ; MODE: 00: Input mode, 01: General purpose output mode
+   64 0000004E         ;       10: Alternate function mode, 11: Analog mode (re
                        set state)
-   61 0000004E 48A1            LDR              r0, =GPIOD_BASE
-   62 00000050 6801            LDR              r1, [r0, #GPIO_MODER]
-   63 00000052 F421 5170       BIC              r1, r1, #(0x0F<<(2*5))
-   64 00000056 F441 5120       ORR              r1, r1, #(0x0A<<(2*5))
-   65 0000005A 6001            STR              r1, [r0, #GPIO_MODER]
-   66 0000005C 6A01            LDR              r1, [r0, #GPIO_AFR0]
-   67 0000005E F041 61EE       ORR              r1, r1, #(0x77<<(4*5))
-   68 00000062 6201            STR              r1, [r0, #GPIO_AFR0]
-   69 00000064 6881            LDR              r1, [r0, #GPIO_OSPEEDR]
-   70 00000066 F441 5170       ORR              r1, r1, #(0x0F<<(2*5))
-   71 0000006A 6081            STR              r1, [r0, #GPIO_OSPEEDR]
-   72 0000006C 6841            LDR              r1, [r0, #GPIO_OTYPER]
-   73 0000006E F021 0120       BIC              r1, r1, #(0x01<<5)
-   74 00000072 F041 0140       ORR              r1, r1, #(0x01<<6)
-   75 00000076 6041            STR              r1, [r0, #GPIO_OTYPER]
-   76 00000078 68C1            LDR              r1, [r0, #GPIO_PUPDR]
-   77 0000007A F421 5170       BIC              r1, r1, #(0x0F<<(2*5))
-   78 0000007E 60C1            STR              r1, [r0, #GPIO_PUPDR]
-   79 00000080         
-   80 00000080 4895            LDR              r0, = USART2_BASE
-   81 00000082 6801            LDR              r1, [r0, #USART_CR1]
-   82 00000084 F021 2110       BIC              r1, r1, #USART_CR1_M
-   83 00000088 F421 4100       BIC              r1, r1, #USART_CR1_OVER8
-   84 0000008C 6001            STR              r1, [r0, #USART_CR1]
-   85 0000008E 6841            LDR              r1, [r0, #USART_CR2]
-   86 00000090 F421 5140       BIC              r1, r1, #USART_CR2_STOP
-   87 00000094 6041            STR              r1, [r0, #USART_CR2]
-   88 00000096 4A91            LDR              r2, = 8000000
-   89 00000098 F44F 5316       LDR              r3, = 9600
-   90 0000009C FB92 F1F3       SDIV             r1, r2, r3
-   91 000000A0 60C1            STR              r1, [r0, #USART_BRR]
-   92 000000A2 6801            LDR              r1, [r0, #USART_CR1]
-   93 000000A4 F041 0101       ORR              r1, r1, #USART_CR1_UE
-   94 000000A8 F04F 0204       LDR              r2, = USART_CR1_RE
-   95 000000AC F042 0208       ORR              r2, r2, #USART_CR1_TE
-   96 000000B0 EA41 0102       ORR              r1, r1, r2
-   97 000000B4 6001            STR              r1, [r0, #USART_CR1]
-   98 000000B6         
-   99 000000B6         ; Enable the clock to GPIO Port E 
-  100 000000B6 4886            LDR              r0, =RCC_BASE
+   65 0000004E 48A1            LDR              r0, =GPIOD_BASE
+   66 00000050 6801            LDR              r1, [r0, #GPIO_MODER]
+   67 00000052 F421 5170       BIC              r1, r1, #(0x0F<<(2*5)) ; Clear 
+                                                            bits for PD5,PD6
+   68 00000056 F441 5120       ORR              r1, r1, #(0x0A<<(2*5)) ; Input(
+                                                            00, reset), Output(
+                                                            01), AlterFunc(10),
+                                                             Analog(11)
+   69 0000005A 6001            STR              r1, [r0, #GPIO_MODER]
+   70 0000005C 6A01            LDR              r1, [r0, #GPIO_AFR0] ; GPIOD->A
+                                                            FR[0] for PIN.0 - P
+                                                            IN.7
+   71 0000005E F041 61EE       ORR              r1, r1, #(0x77<<(4*5)) 
+                                                            ;AF7(USART1..3)
+   72 00000062 6201            STR              r1, [r0, #GPIO_AFR0]
+   73 00000064 6881            LDR              r1, [r0, #GPIO_OSPEEDR]
+   74 00000066 F441 5170       ORR              r1, r1, #(0x0F<<(2*5)) ; 400 KH
+                                                            z(00), 2 MHz(01), 1
+                                                            0 MHz(01), 40 MHz (
+                                                            11)
+   75 0000006A 6081            STR              r1, [r0, #GPIO_OSPEEDR]
+   76 0000006C 6841            LDR              r1, [r0, #GPIO_OTYPER]
+   77 0000006E F021 0120       BIC              r1, r1, #(0x01<<5) ; TX pin (PD
+                                                            .5) should be set u
 
 
 
 ARM Macro Assembler    Page 535 
 
 
-  101 000000B8 6CC1            LDR              r1, [r0, #RCC_AHB2ENR]
-  102 000000BA F041 0110       ORR              r1, r1, #RCC_AHB2ENR_GPIOEEN
-  103 000000BE 64C1            STR              r1, [r0, #RCC_AHB2ENR]
-  104 000000C0         
-  105 000000C0 4887            LDR              r0, =GPIOE_BASE
-  106 000000C2 6801            LDR              r1, [r0, #GPIO_MODER]
-  107 000000C4 F021 417F       BIC              r1, r1, #(0xFF<<(2*12))
-  108 000000C8 F041 41AA       ORR              r1, r1, #(0x55<<(2*12))
-  109 000000CC 6001            STR              r1, [r0, #GPIO_MODER]
-  110 000000CE         
-  111 000000CE 68C1            LDR              r1, [r0, #GPIO_PUPDR]
-  112 000000D0 F021 417F       BIC              r1, r1, #(0xFF<<(2*12))
-  113 000000D4 60C1            STR              r1, [r0, #GPIO_PUPDR]
-  114 000000D6         
-  115 000000D6         ; Enable the clock to GPIO Port A 
-  116 000000D6 487E            LDR              r0, =RCC_BASE
-  117 000000D8 6CC1            LDR              r1, [r0, #RCC_AHB2ENR]
-  118 000000DA F041 0101       ORR              r1, r1, #RCC_AHB2ENR_GPIOAEN
-  119 000000DE 64C1            STR              r1, [r0, #RCC_AHB2ENR]
-  120 000000E0         
-  121 000000E0 F04F 4090       LDR              r0, =GPIOA_BASE
-  122 000000E4 6801            LDR              r1, [r0, #GPIO_MODER]
-  123 000000E6 F021 01FF       BIC              r1, r1, #(0xFF)
-  124 000000EA 6001            STR              r1, [r0, #GPIO_MODER]
-  125 000000EC         
-  126 000000EC 68C1            LDR              r1, [r0, #GPIO_PUPDR]
-  127 000000EE F021 01FF       BIC              r1, r1, #(0xFF)
-  128 000000F2 F041 01AA       ORR              r1, r1, #(0xAA)
-  129 000000F6 60C1            STR              r1, [r0, #GPIO_PUPDR]
-  130 000000F8         
-  131 000000F8 4A79    st      LDR              r2, =GPIOE_BASE
-  132 000000FA 6953            LDR              r3, [r2, #GPIO_ODR]
-  133 000000FC F423 4370       BIC              r3, r3, #(0xF<<12)
-  134 00000100 6153            STR              r3, [r2, #GPIO_ODR]
-  135 00000102 F241 3988       LDR              r9, = 5000
-  136 00000106 F44F 5480       LDR              r4, = (0x1<<12)
-  137 0000010A E099            B                delayst
-  138 0000010C F04F 4290 
-                       checkcols
-                               LDR              r2, =GPIOA_BASE
-  139 00000110 6915            LDR              r5,[r2,#GPIO_IDR]
-  140 00000112 F04F 060F       LDR              r6, =0xf
-  141 00000116 EA06 0705       AND              r7,r6,r5
-  142 0000011A 2F00            CMP              r7,#(0x0)
-  143 0000011C D04C            BEQ              set
-  144 0000011E 2F08            CMP              r7,#(0x8)
-  145 00000120 F04F 0808       LDR              r8, =0x8
-  146 00000124 D00C            BEQ              GoDeb
-  147 00000126 2F04            CMP              r7,#(0x4)
-  148 00000128 F04F 0804       LDR              r8, =0x4
-  149 0000012C D008            BEQ              GoDeb
-  150 0000012E 2F02            CMP              r7,#(0x2)
-  151 00000130 F04F 0802       LDR              r8, =0x2
-  152 00000134 D004            BEQ              GoDeb
-  153 00000136 2F01            CMP              r7,#(0x1)
-  154 00000138 F04F 0801       LDR              r8, =0x1
-  155 0000013C D000            BEQ              GoDeb
-  156 0000013E E7DB            B                st
-  157 00000140 F1B8 0F08 
+                                                            p as a push-pull ou
+                                                            tput
+   78 00000072 F041 0140       ORR              r1, r1, #(0x01<<6) ; RX pin (PD
+                                                            .6) is a floating i
+                                                            nput
+   79 00000076 6041            STR              r1, [r0, #GPIO_OTYPER]
+   80 00000078 68C1            LDR              r1, [r0, #GPIO_PUPDR]
+   81 0000007A F421 5170       BIC              r1, r1, #(0x0F<<(2*5)) ;No pull
+                                                            -up/pull-down
+   82 0000007E 60C1            STR              r1, [r0, #GPIO_PUPDR]
+   83 00000080         
+   84 00000080         
+   85 00000080         ; Default setting: No hardware flow control, 8 data bits
+                       , no parity, and one stop bit  
+   86 00000080         ;USARTx->BRR   = 8000000/9600;            
+   87 00000080         ; BRR = System Frequency/BAUDRATE
+   88 00000080         ; Configure word length to 8 bit. 00=8 bits, 01=9 bits, 
+                       10=7 bits
+   89 00000080 4895            LDR              r0, = USART2_BASE
+   90 00000082 6801            LDR              r1, [r0, #USART_CR1]
+   91 00000084 F021 2110       BIC              r1, r1, #USART_CR1_M
+   92 00000088 F421 4100       BIC              r1, r1, #USART_CR1_OVER8 ; Conf
+                                                            igure oversampling 
+                                                            to x16
+   93 0000008C 6001            STR              r1, [r0, #USART_CR1]
+   94 0000008E 6841            LDR              r1, [r0, #USART_CR2]
+   95 00000090 F421 5140       BIC              r1, r1, #USART_CR2_STOP ; Confi
+                                                            gure stop bits to 1
+                                                             stop bit
+   96 00000094 6041            STR              r1, [r0, #USART_CR2]
+   97 00000096 4A91            LDR              r2, = 8000000
+   98 00000098 F44F 5316       LDR              r3, = 9600
+   99 0000009C FB92 F1F3       SDIV             r1, r2, r3
+  100 000000A0 60C1            STR              r1, [r0, #USART_BRR]
+  101 000000A2 6801            LDR              r1, [r0, #USART_CR1]
+  102 000000A4 F041 0101       ORR              r1, r1, #USART_CR1_UE
+  103 000000A8 F04F 0204       LDR              r2, = USART_CR1_RE
+  104 000000AC F042 0208       ORR              r2, r2, #USART_CR1_TE ; Transmi
+                                                            tter and Receiver e
+                                                            nable
+  105 000000B0 EA41 0102       ORR              r1, r1, r2
+  106 000000B4 6001            STR              r1, [r0, #USART_CR1] 
+                                                            ; USART2 enable
+  107 000000B6         
+  108 000000B6         ; Enable the clock to GPIO Port E 
+  109 000000B6 4886            LDR              r0, =RCC_BASE
+  110 000000B8 6CC1            LDR              r1, [r0, #RCC_AHB2ENR]
+  111 000000BA F041 0110       ORR              r1, r1, #RCC_AHB2ENR_GPIOEEN
+  112 000000BE 64C1            STR              r1, [r0, #RCC_AHB2ENR]
+  113 000000C0         
+  114 000000C0 4887            LDR              r0, =GPIOE_BASE
+  115 000000C2 6801            LDR              r1, [r0, #GPIO_MODER]
+  116 000000C4 F021 417F       BIC              r1, r1, #(0xFF<<(2*12))
+  117 000000C8 F041 41AA       ORR              r1, r1, #(0x55<<(2*12))
+  118 000000CC 6001            STR              r1, [r0, #GPIO_MODER]
+  119 000000CE         
+  120 000000CE 68C1            LDR              r1, [r0, #GPIO_PUPDR]
+  121 000000D0 F021 417F       BIC              r1, r1, #(0xFF<<(2*12))
+  122 000000D4 60C1            STR              r1, [r0, #GPIO_PUPDR]
 
 
 
 ARM Macro Assembler    Page 536 
 
 
-                       GoDeb   CMP              r8, #0x8
-  158 00000144 D008            BEQ              db8
-  159 00000146 F1B8 0F04       CMP              r8, #0x4
-  160 0000014A D011            BEQ              db4
-  161 0000014C F1B8 0F02       CMP              r8, #0x2
-  162 00000150 D01A            BEQ              db2
-  163 00000152 F1B8 0F01       CMP              r8, #0x1
-  164 00000156 D023            BEQ              db1
-  165 00000158 F242 7910 
-                       db8     LDR              r9, = 10000
-  166 0000015C F000 F876       BL               delay
-  167 00000160 F04F 4290       LDR              r2, =GPIOA_BASE
-  168 00000164 6915            LDR              r5,[r2,#GPIO_IDR]
-  169 00000166 EA08 0505       AND              r5,r8,r5
-  170 0000016A 4545            CMP              r5, r8
-  171 0000016C D0F4            BEQ              db8
-  172 0000016E D133            BNE              col1
-  173 00000170         
-  174 00000170 F242 7910 
-                       db4     LDR              r9, = 10000
-  175 00000174 F000 F86A       BL               delay
-  176 00000178 F04F 4290       LDR              r2, =GPIOA_BASE
-  177 0000017C 6915            LDR              r5,[r2,#GPIO_IDR]
-  178 0000017E EA08 0505       AND              r5,r8,r5
-  179 00000182 4545            CMP              r5, r8
-  180 00000184 D0F4            BEQ              db4
-  181 00000186 D134            BNE              col2
-  182 00000188 F242 7910 
-                       db2     LDR              r9, = 10000
-  183 0000018C F000 F85E       BL               delay
-  184 00000190 F04F 4290       LDR              r2, =GPIOA_BASE
-  185 00000194 6915            LDR              r5,[r2,#GPIO_IDR]
-  186 00000196 EA08 0505       AND              r5,r8,r5
-  187 0000019A 4545            CMP              r5, r8
-  188 0000019C D0F4            BEQ              db2
-  189 0000019E D135            BNE              col3
-  190 000001A0 F242 7910 
-                       db1     LDR              r9, = 10000
-  191 000001A4 F000 F852       BL               delay
-  192 000001A8 F04F 4290       LDR              r2, =GPIOA_BASE
-  193 000001AC 6915            LDR              r5,[r2,#GPIO_IDR]
-  194 000001AE EA08 0505       AND              r5,r8,r5
-  195 000001B2 4545            CMP              r5, r8
-  196 000001B4 D0F4            BEQ              db1
-  197 000001B6 D136            BNE              col4
-  198 000001B8         
-  199 000001B8 4A49    set     LDR              r2, =GPIOE_BASE
-  200 000001BA 6953            LDR              r3, [r2, #GPIO_ODR]
-  201 000001BC F423 4370       BIC              r3, r3, #(0xF<<12)
-  202 000001C0 EA43 0304       ORR              r3, r3, r4
-  203 000001C4 46A3            MOV              r11, r4
-  204 000001C6 EA4F 0444       LSL              r4, r4, #1
-  205 000001CA 6153            STR              r3, [r2, #GPIO_ODR]
-  206 000001CC F1BB 0F00       CMP              r11, #0
-  207 000001D0 D092            BEQ              st
-  208 000001D2 F241 3988       LDR              r9, = 5000
-  209 000001D6 E033            B                delayst
-  210 000001D8         
-  211 000001D8 F5BB 5F80 
+  123 000000D6         
+  124 000000D6         ; Enable the clock to GPIO Port A 
+  125 000000D6 487E            LDR              r0, =RCC_BASE
+  126 000000D8 6CC1            LDR              r1, [r0, #RCC_AHB2ENR]
+  127 000000DA F041 0101       ORR              r1, r1, #RCC_AHB2ENR_GPIOAEN
+  128 000000DE 64C1            STR              r1, [r0, #RCC_AHB2ENR]
+  129 000000E0         
+  130 000000E0 F04F 4090       LDR              r0, =GPIOA_BASE
+  131 000000E4 6801            LDR              r1, [r0, #GPIO_MODER]
+  132 000000E6 F021 01FF       BIC              r1, r1, #(0xFF)
+  133 000000EA 6001            STR              r1, [r0, #GPIO_MODER]
+  134 000000EC         
+  135 000000EC 68C1            LDR              r1, [r0, #GPIO_PUPDR]
+  136 000000EE F021 01FF       BIC              r1, r1, #(0xFF)
+  137 000000F2 F041 01AA       ORR              r1, r1, #(0xAA)
+  138 000000F6 60C1            STR              r1, [r0, #GPIO_PUPDR]
+  139 000000F8         ; Algorithum For KEY pad Scan
+  140 000000F8         ; Start:
+  141 000000F8         ; 
+  142 000000F8         ; SET ROW1 * SET MEANS HIGH * CLEAR MEANS LOW
+  143 000000F8         ; 
+  144 000000F8         ; CHECK IF COL#1 IS HIGH
+  145 000000F8         ; 
+  146 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number1
+  147 000000F8         ; 
+  148 000000F8         ; IF NOT, CHECK IF COL#2 IS HIGH
+  149 000000F8         ; 
+  150 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number4
+  151 000000F8         ; 
+  152 000000F8         ; IF NOT, CHECK IF COL#3 IS HIGH
+  153 000000F8         ; 
+  154 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number7
+  155 000000F8         ; 
+  156 000000F8         ; IF NOT, CHECK IF COL#4 IS HIGH
+  157 000000F8         ; 
+  158 000000F8         ; IF SO, GOTO INSTRUCTION FOR star
+  159 000000F8         ; 
+  160 000000F8         ; IF NOT, CLEAR ROW1 AND SET ROW2 
+  161 000000F8         ; CHECK IF COL#1 IS HIGH
+  162 000000F8         ; 
+  163 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number2
+  164 000000F8         ; 
+  165 000000F8         ; IF NOT, CHECK IF COL#2 IS HIGH
+  166 000000F8         ; 
+  167 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number5
+  168 000000F8         ; 
+  169 000000F8         ; IF NOT, CHECK IF COL#3 IS HIGH
+  170 000000F8         ; 
+  171 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number8
+  172 000000F8         ; 
+  173 000000F8         ; IF NOT, CHECK IF COL#4 IS HIGH
+  174 000000F8         ; 
+  175 000000F8         ; IF SO, GOTO INSTRUCTION FOR Number0
+  176 000000F8         ; 
+  177 000000F8         ; IF NOT, CLEAR ROW2 AND SET ROW3 
+  178 000000F8         
+  179 000000F8 4A79    st      LDR              r2, =GPIOE_BASE
+  180 000000FA 6953            LDR              r3, [r2, #GPIO_ODR]
+  181 000000FC F423 4370       BIC              r3, r3, #(0xF<<12)
 
 
 
 ARM Macro Assembler    Page 537 
 
 
-                       col1    CMP              r11, #(0x1<<12)
-  212 000001DC D048            BEQ              pone
-  213 000001DE F5BB 5F00       CMP              r11, #(0x1<<13)
-  214 000001E2 D04E            BEQ              pfour
-  215 000001E4 F5BB 4F80       CMP              r11, #(0x1<<14)
-  216 000001E8 D057            BEQ              psev
-  217 000001EA F5BB 4F00       CMP              r11, #(0x1<<15)
-  218 000001EE D060            BEQ              pstar
-  219 000001F0 E782            B                st
-  220 000001F2 F5BB 5F80 
-                       col2    CMP              r11, #(0x1<<12)
-  221 000001F6 D038            BEQ              ptwo
-  222 000001F8 F5BB 5F00       CMP              r11, #(0x1<<13)
-  223 000001FC D03E            BEQ              pfive
-  224 000001FE F5BB 4F80       CMP              r11, #(0x1<<14)
-  225 00000202 D047            BEQ              pate
-  226 00000204 F5BB 4F00       CMP              r11, #(0x1<<15)
-  227 00000208 D050            BEQ              pzero
-  228 0000020A E775            B                st
-  229 0000020C F5BB 5F80 
-                       col3    CMP              r11, #(0x1<<12)
-  230 00000210 D028            BEQ              pthree
-  231 00000212 F5BB 5F00       CMP              r11, #(0x1<<13)
-  232 00000216 D02E            BEQ              psix
-  233 00000218 F5BB 4F80       CMP              r11, #(0x1<<14)
-  234 0000021C D037            BEQ              pnine
-  235 0000021E F5BB 4F00       CMP              r11, #(0x1<<15)
-  236 00000222 D040            BEQ              phash
-  237 00000224 E768            B                st
-  238 00000226 F5BB 5F80 
-                       col4    CMP              r11, #(0x1<<12)
-  239 0000022A D018            BEQ              pA
-  240 0000022C F5BB 5F00       CMP              r11, #(0x1<<13)
-  241 00000230 D012            BEQ              pB
-  242 00000232 F5BB 4F80       CMP              r11, #(0x1<<14)
-  243 00000236 D027            BEQ              p_C
-  244 00000238 F5BB 4F00       CMP              r11, #(0x1<<15)
-  245 0000023C D030            BEQ              pD
-  246 0000023E E75B            B                st
-  247 00000240         
-  248 00000240         
-  249 00000240         
-  250 00000240 F1A9 0901 
-                       delayst SUB              r9,r9,#1
-  251 00000244 F1B9 0F00       CMP              r9, #0
-  252 00000248 D1FA            BNE              delayst
-  253 0000024A E75F            B                checkcols
-  254 0000024C F1A9 0901 
-                       delay   SUB              r9,r9,#1
-  255 00000250 F1B9 0F00       CMP              r9, #0
-  256 00000254 D1FA            BNE              delay
-  257 00000256 4770            BX               LR
-  258 00000258         
-  259 00000258 F04F 0C42 
-                       pB      LDR              r12, =0x42
-  260 0000025C E02C            B                write
-  261 0000025E F04F 0C41 
-                       pA      LDR              r12, =0x41
-  262 00000262 E029            B                write
+  182 00000100 6153            STR              r3, [r2, #GPIO_ODR]
+  183 00000102 F241 3988       LDR              r9, = 5000
+  184 00000106 F44F 5480       LDR              r4, = (0x1<<12)
+  185 0000010A E099            B                delayst
+  186 0000010C F04F 4290 
+                       checkcols
+                               LDR              r2, =GPIOA_BASE
+  187 00000110 6915            LDR              r5,[r2,#GPIO_IDR]
+  188 00000112 F04F 060F       LDR              r6, =0xf
+  189 00000116 EA06 0705       AND              r7,r6,r5
+  190 0000011A 2F00            CMP              r7,#(0x0)
+  191 0000011C D04C            BEQ              set
+  192 0000011E 2F08            CMP              r7,#(0x8)
+  193 00000120 F04F 0808       LDR              r8, =0x8
+  194 00000124 D00C            BEQ              GoDeb
+  195 00000126 2F04            CMP              r7,#(0x4)
+  196 00000128 F04F 0804       LDR              r8, =0x4
+  197 0000012C D008            BEQ              GoDeb
+  198 0000012E 2F02            CMP              r7,#(0x2)
+  199 00000130 F04F 0802       LDR              r8, =0x2
+  200 00000134 D004            BEQ              GoDeb
+  201 00000136 2F01            CMP              r7,#(0x1)
+  202 00000138 F04F 0801       LDR              r8, =0x1
+  203 0000013C D000            BEQ              GoDeb
+  204 0000013E E7DB            B                st
+  205 00000140 F1B8 0F08 
+                       GoDeb   CMP              r8, #0x8
+  206 00000144 D008            BEQ              db8
+  207 00000146 F1B8 0F04       CMP              r8, #0x4
+  208 0000014A D011            BEQ              db4
+  209 0000014C F1B8 0F02       CMP              r8, #0x2
+  210 00000150 D01A            BEQ              db2
+  211 00000152 F1B8 0F01       CMP              r8, #0x1
+  212 00000156 D023            BEQ              db1
+  213 00000158 F242 7910 
+                       db8     LDR              r9, = 10000
+  214 0000015C F000 F876       BL               delay
+  215 00000160 F04F 4290       LDR              r2, =GPIOA_BASE
+  216 00000164 6915            LDR              r5,[r2,#GPIO_IDR]
+  217 00000166 EA08 0505       AND              r5,r8,r5
+  218 0000016A 4545            CMP              r5, r8
+  219 0000016C D0F4            BEQ              db8
+  220 0000016E D133            BNE              col1
+  221 00000170         
+  222 00000170 F242 7910 
+                       db4     LDR              r9, = 10000
+  223 00000174 F000 F86A       BL               delay
+  224 00000178 F04F 4290       LDR              r2, =GPIOA_BASE
+  225 0000017C 6915            LDR              r5,[r2,#GPIO_IDR]
+  226 0000017E EA08 0505       AND              r5,r8,r5
+  227 00000182 4545            CMP              r5, r8
+  228 00000184 D0F4            BEQ              db4
+  229 00000186 D134            BNE              col2
+  230 00000188 F242 7910 
+                       db2     LDR              r9, = 10000
+  231 0000018C F000 F85E       BL               delay
+  232 00000190 F04F 4290       LDR              r2, =GPIOA_BASE
+  233 00000194 6915            LDR              r5,[r2,#GPIO_IDR]
+  234 00000196 EA08 0505       AND              r5,r8,r5
 
 
 
 ARM Macro Assembler    Page 538 
 
 
-  263 00000264 F04F 0C33 
-                       pthree  LDR              r12, =0x33
-  264 00000268 E026            B                write
-  265 0000026A F04F 0C32 
-                       ptwo    LDR              r12, =0x32
-  266 0000026E E023            B                write
-  267 00000270 F04F 0C31 
-                       pone    LDR              r12, =0x31
-  268 00000274 E020            B                write
-  269 00000276 F04F 0C36 
-                       psix    LDR              r12, =0x36
-  270 0000027A E01D            B                write
-  271 0000027C F04F 0C35 
-                       pfive   LDR              r12, =0x35
-  272 00000280 E01A            B                write
-  273 00000282 F04F 0C34 
-                       pfour   LDR              r12, =0x34
-  274 00000286 E017            B                write
-  275 00000288 F04F 0C43 
-                       p_C     LDR              r12, =0x43
-  276 0000028C E014            B                write
-  277 0000028E F04F 0C39 
-                       pnine   LDR              r12, =0x39
-  278 00000292 E011            B                write
-  279 00000294 F04F 0C38 
-                       pate    LDR              r12, =0x38
-  280 00000298 E00E            B                write
-  281 0000029A F04F 0C37 
-                       psev    LDR              r12, =0x37
-  282 0000029E E00B            B                write
-  283 000002A0 F04F 0C44 
-                       pD      LDR              r12, =0x44
-  284 000002A4 E008            B                write
-  285 000002A6 F04F 0C23 
-                       phash   LDR              r12, =0x23
-  286 000002AA E005            B                write
-  287 000002AC F04F 0C30 
-                       pzero   LDR              r12, =0x30
-  288 000002B0 E002            B                write
-  289 000002B2 F04F 0C2A 
-                       pstar   LDR              r12, =0x2A
-  290 000002B6 E7FF            B                write
-  291 000002B8 4807    write   LDR              r0, = USART2_BASE
-  292 000002BA 69C1            LDR              r1, [r0, #USART_ISR]
-  293 000002BC F001 0180       AND              r1, r1, #USART_ISR_TXE
-  294 000002C0 2980            CMP              r1, #USART_ISR_TXE
-  295 000002C2 D000            BEQ              setTDR
-  296 000002C4 D1F8            BNE              write
-  297 000002C6 4804    setTDR  LDR              r0, = USART2_BASE
-  298 000002C8 F8C0 C028       STR              r12, [r0, #USART_TDR]
-  299 000002CC E714            B                st
-  300 000002CE                 ENDP
-  301 000002CE         
-  302 000002CE                 END
-              00 00 40021000 
-              48000C00 
-              40004400 
-              007A1200 
-              48001000 
+  235 0000019A 4545            CMP              r5, r8
+  236 0000019C D0F4            BEQ              db2
+  237 0000019E D135            BNE              col3
+  238 000001A0 F242 7910 
+                       db1     LDR              r9, = 10000
+  239 000001A4 F000 F852       BL               delay
+  240 000001A8 F04F 4290       LDR              r2, =GPIOA_BASE
+  241 000001AC 6915            LDR              r5,[r2,#GPIO_IDR]
+  242 000001AE EA08 0505       AND              r5,r8,r5
+  243 000001B2 4545            CMP              r5, r8
+  244 000001B4 D0F4            BEQ              db1
+  245 000001B6 D136            BNE              col4
+  246 000001B8         
+  247 000001B8 4A49    set     LDR              r2, =GPIOE_BASE
+  248 000001BA 6953            LDR              r3, [r2, #GPIO_ODR]
+  249 000001BC F423 4370       BIC              r3, r3, #(0xF<<12)
+  250 000001C0 EA43 0304       ORR              r3, r3, r4
+  251 000001C4 46A3            MOV              r11, r4
+  252 000001C6 EA4F 0444       LSL              r4, r4, #1
+  253 000001CA 6153            STR              r3, [r2, #GPIO_ODR]
+  254 000001CC F1BB 0F00       CMP              r11, #0
+  255 000001D0 D092            BEQ              st
+  256 000001D2 F241 3988       LDR              r9, = 5000
+  257 000001D6 E033            B                delayst
+  258 000001D8         
+  259 000001D8 F5BB 5F80 
+                       col1    CMP              r11, #(0x1<<12)
+  260 000001DC D048            BEQ              pone
+  261 000001DE F5BB 5F00       CMP              r11, #(0x1<<13)
+  262 000001E2 D04E            BEQ              pfour
+  263 000001E4 F5BB 4F80       CMP              r11, #(0x1<<14)
+  264 000001E8 D057            BEQ              psev
+  265 000001EA F5BB 4F00       CMP              r11, #(0x1<<15)
+  266 000001EE D060            BEQ              pstar
+  267 000001F0 E782            B                st
+  268 000001F2 F5BB 5F80 
+                       col2    CMP              r11, #(0x1<<12)
+  269 000001F6 D038            BEQ              ptwo
+  270 000001F8 F5BB 5F00       CMP              r11, #(0x1<<13)
+  271 000001FC D03E            BEQ              pfive
+  272 000001FE F5BB 4F80       CMP              r11, #(0x1<<14)
+  273 00000202 D047            BEQ              pate
+  274 00000204 F5BB 4F00       CMP              r11, #(0x1<<15)
+  275 00000208 D050            BEQ              pzero
+  276 0000020A E775            B                st
+  277 0000020C F5BB 5F80 
+                       col3    CMP              r11, #(0x1<<12)
+  278 00000210 D028            BEQ              pthree
+  279 00000212 F5BB 5F00       CMP              r11, #(0x1<<13)
+  280 00000216 D02E            BEQ              psix
+  281 00000218 F5BB 4F80       CMP              r11, #(0x1<<14)
+  282 0000021C D037            BEQ              pnine
+  283 0000021E F5BB 4F00       CMP              r11, #(0x1<<15)
+  284 00000222 D040            BEQ              phash
+  285 00000224 E768            B                st
+  286 00000226 F5BB 5F80 
+                       col4    CMP              r11, #(0x1<<12)
+  287 0000022A D018            BEQ              pA
+  288 0000022C F5BB 5F00       CMP              r11, #(0x1<<13)
 
 
 
 ARM Macro Assembler    Page 539 
 
 
+  289 00000230 D012            BEQ              pB
+  290 00000232 F5BB 4F80       CMP              r11, #(0x1<<14)
+  291 00000236 D027            BEQ              p_C
+  292 00000238 F5BB 4F00       CMP              r11, #(0x1<<15)
+  293 0000023C D030            BEQ              pD
+  294 0000023E E75B            B                st
+  295 00000240         
+  296 00000240         
+  297 00000240         
+  298 00000240 F1A9 0901 
+                       delayst SUB              r9,r9,#1
+  299 00000244 F1B9 0F00       CMP              r9, #0
+  300 00000248 D1FA            BNE              delayst
+  301 0000024A E75F            B                checkcols
+  302 0000024C F1A9 0901 
+                       delay   SUB              r9,r9,#1
+  303 00000250 F1B9 0F00       CMP              r9, #0
+  304 00000254 D1FA            BNE              delay
+  305 00000256 4770            BX               LR
+  306 00000258         
+  307 00000258 F04F 0C42 
+                       pB      LDR              r12, =0x42
+  308 0000025C E02C            B                write
+  309 0000025E F04F 0C41 
+                       pA      LDR              r12, =0x41
+  310 00000262 E029            B                write
+  311 00000264 F04F 0C33 
+                       pthree  LDR              r12, =0x33
+  312 00000268 E026            B                write
+  313 0000026A F04F 0C32 
+                       ptwo    LDR              r12, =0x32
+  314 0000026E E023            B                write
+  315 00000270 F04F 0C31 
+                       pone    LDR              r12, =0x31
+  316 00000274 E020            B                write
+  317 00000276 F04F 0C36 
+                       psix    LDR              r12, =0x36
+  318 0000027A E01D            B                write
+  319 0000027C F04F 0C35 
+                       pfive   LDR              r12, =0x35
+  320 00000280 E01A            B                write
+  321 00000282 F04F 0C34 
+                       pfour   LDR              r12, =0x34
+  322 00000286 E017            B                write
+  323 00000288 F04F 0C43 
+                       p_C     LDR              r12, =0x43
+  324 0000028C E014            B                write
+  325 0000028E F04F 0C39 
+                       pnine   LDR              r12, =0x39
+  326 00000292 E011            B                write
+  327 00000294 F04F 0C38 
+                       pate    LDR              r12, =0x38
+  328 00000298 E00E            B                write
+  329 0000029A F04F 0C37 
+                       psev    LDR              r12, =0x37
+  330 0000029E E00B            B                write
+  331 000002A0 F04F 0C44 
+                       pD      LDR              r12, =0x44
+  332 000002A4 E008            B                write
+
+
+
+ARM Macro Assembler    Page 540 
+
+
+  333 000002A6 F04F 0C23 
+                       phash   LDR              r12, =0x23
+  334 000002AA E005            B                write
+  335 000002AC F04F 0C30 
+                       pzero   LDR              r12, =0x30
+  336 000002B0 E002            B                write
+  337 000002B2 F04F 0C2A 
+                       pstar   LDR              r12, =0x2A
+  338 000002B6 E7FF            B                write
+  339 000002B8         
+  340 000002B8         ; wait until TXE (TX empty) bit is set 
+  341 000002B8 4807    write   LDR              r0, = USART2_BASE
+  342 000002BA 69C1            LDR              r1, [r0, #USART_ISR]
+  343 000002BC F001 0180       AND              r1, r1, #USART_ISR_TXE
+  344 000002C0 2980            CMP              r1, #USART_ISR_TXE
+  345 000002C2 D000            BEQ              setTDR
+  346 000002C4 D1F8            BNE              write
+  347 000002C6 4804    setTDR  LDR              r0, = USART2_BASE
+  348 000002C8 F8C0 C028       STR              r12, [r0, #USART_TDR] ; set TDR
+                                                             when TXE bit is 0
+  349 000002CC E714            B                st
+  350 000002CE                 ENDP
+  351 000002CE         
+  352 000002CE                 END
+              00 00 40021000 
+              48000C00 
+              40004400 
+              007A1200 
+              48001000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=.\objects\main.d -o.\objects\main.o -I.\RTE\_Target_1 -IC:\User
 s\beye1\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include -IC:\Users\b
@@ -35022,12 +35116,12 @@ GoDeb 00000140
 
 Symbol: GoDeb
    Definitions
-      At line 157 in file main.s
+      At line 205 in file main.s
    Uses
-      At line 146 in file main.s
-      At line 149 in file main.s
-      At line 152 in file main.s
-      At line 155 in file main.s
+      At line 194 in file main.s
+      At line 197 in file main.s
+      At line 200 in file main.s
+      At line 203 in file main.s
 
 __main 00000000
 
@@ -35041,41 +35135,41 @@ checkcols 0000010C
 
 Symbol: checkcols
    Definitions
-      At line 138 in file main.s
+      At line 186 in file main.s
    Uses
-      At line 253 in file main.s
+      At line 301 in file main.s
 Comment: checkcols used once
 col1 000001D8
 
 Symbol: col1
    Definitions
-      At line 211 in file main.s
+      At line 259 in file main.s
    Uses
-      At line 172 in file main.s
+      At line 220 in file main.s
 Comment: col1 used once
 col2 000001F2
 
 Symbol: col2
    Definitions
-      At line 220 in file main.s
+      At line 268 in file main.s
    Uses
-      At line 181 in file main.s
+      At line 229 in file main.s
 Comment: col2 used once
 col3 0000020C
 
 Symbol: col3
    Definitions
-      At line 229 in file main.s
+      At line 277 in file main.s
    Uses
-      At line 189 in file main.s
+      At line 237 in file main.s
 Comment: col3 used once
 col4 00000226
 
 Symbol: col4
    Definitions
-      At line 238 in file main.s
+      At line 286 in file main.s
    Uses
-      At line 197 in file main.s
+      At line 245 in file main.s
 Comment: col4 used once
 
 
@@ -35087,57 +35181,57 @@ cont 0000003A
 
 Symbol: cont
    Definitions
-      At line 48 in file main.s
+      At line 52 in file main.s
    Uses
-      At line 39 in file main.s
+      At line 43 in file main.s
 Comment: cont used once
 db1 000001A0
 
 Symbol: db1
    Definitions
-      At line 190 in file main.s
+      At line 238 in file main.s
    Uses
-      At line 164 in file main.s
-      At line 196 in file main.s
+      At line 212 in file main.s
+      At line 244 in file main.s
 
 db2 00000188
 
 Symbol: db2
    Definitions
-      At line 182 in file main.s
+      At line 230 in file main.s
    Uses
-      At line 162 in file main.s
-      At line 188 in file main.s
+      At line 210 in file main.s
+      At line 236 in file main.s
 
 db4 00000170
 
 Symbol: db4
    Definitions
-      At line 174 in file main.s
+      At line 222 in file main.s
    Uses
-      At line 160 in file main.s
-      At line 180 in file main.s
+      At line 208 in file main.s
+      At line 228 in file main.s
 
 db8 00000158
 
 Symbol: db8
    Definitions
-      At line 165 in file main.s
+      At line 213 in file main.s
    Uses
-      At line 158 in file main.s
-      At line 171 in file main.s
+      At line 206 in file main.s
+      At line 219 in file main.s
 
 delay 0000024C
 
 Symbol: delay
    Definitions
-      At line 254 in file main.s
+      At line 302 in file main.s
    Uses
-      At line 166 in file main.s
-      At line 175 in file main.s
-      At line 183 in file main.s
-      At line 191 in file main.s
-      At line 256 in file main.s
+      At line 214 in file main.s
+      At line 223 in file main.s
+      At line 231 in file main.s
+      At line 239 in file main.s
+      At line 304 in file main.s
 
 delayst 00000240
 
@@ -35149,19 +35243,19 @@ ARM Macro Assembler    Page 3 Alphabetic symbol ordering
 Relocatable symbols
 
    Definitions
-      At line 250 in file main.s
+      At line 298 in file main.s
    Uses
-      At line 137 in file main.s
-      At line 209 in file main.s
-      At line 252 in file main.s
+      At line 185 in file main.s
+      At line 257 in file main.s
+      At line 300 in file main.s
 
 drop 00000038
 
 Symbol: drop
    Definitions
-      At line 46 in file main.s
+      At line 50 in file main.s
    Uses
-      At line 45 in file main.s
+      At line 49 in file main.s
 Comment: drop used once
 main 00000000
 
@@ -35175,35 +35269,35 @@ msiwait 0000002C
 
 Symbol: msiwait
    Definitions
-      At line 41 in file main.s
+      At line 45 in file main.s
    Uses
-      At line 32 in file main.s
-      At line 38 in file main.s
-      At line 44 in file main.s
+      At line 33 in file main.s
+      At line 42 in file main.s
+      At line 48 in file main.s
 
 pA 0000025E
 
 Symbol: pA
    Definitions
-      At line 261 in file main.s
+      At line 309 in file main.s
    Uses
-      At line 239 in file main.s
+      At line 287 in file main.s
 Comment: pA used once
 pB 00000258
 
 Symbol: pB
    Definitions
-      At line 259 in file main.s
+      At line 307 in file main.s
    Uses
-      At line 241 in file main.s
+      At line 289 in file main.s
 Comment: pB used once
 pD 000002A0
 
 Symbol: pD
    Definitions
-      At line 283 in file main.s
+      At line 331 in file main.s
    Uses
-      At line 245 in file main.s
+      At line 293 in file main.s
 Comment: pD used once
 p_C 00000288
 
@@ -35215,63 +35309,63 @@ Relocatable symbols
 
 Symbol: p_C
    Definitions
-      At line 275 in file main.s
+      At line 323 in file main.s
    Uses
-      At line 243 in file main.s
+      At line 291 in file main.s
 Comment: p_C used once
 pate 00000294
 
 Symbol: pate
    Definitions
-      At line 279 in file main.s
+      At line 327 in file main.s
    Uses
-      At line 225 in file main.s
+      At line 273 in file main.s
 Comment: pate used once
 pfive 0000027C
 
 Symbol: pfive
    Definitions
-      At line 271 in file main.s
+      At line 319 in file main.s
    Uses
-      At line 223 in file main.s
+      At line 271 in file main.s
 Comment: pfive used once
 pfour 00000282
 
 Symbol: pfour
    Definitions
-      At line 273 in file main.s
+      At line 321 in file main.s
    Uses
-      At line 214 in file main.s
+      At line 262 in file main.s
 Comment: pfour used once
 phash 000002A6
 
 Symbol: phash
    Definitions
-      At line 285 in file main.s
+      At line 333 in file main.s
    Uses
-      At line 236 in file main.s
+      At line 284 in file main.s
 Comment: phash used once
 pnine 0000028E
 
 Symbol: pnine
    Definitions
-      At line 277 in file main.s
+      At line 325 in file main.s
    Uses
-      At line 234 in file main.s
+      At line 282 in file main.s
 Comment: pnine used once
 pone 00000270
 
 Symbol: pone
    Definitions
-      At line 267 in file main.s
+      At line 315 in file main.s
    Uses
-      At line 212 in file main.s
+      At line 260 in file main.s
 Comment: pone used once
 psev 0000029A
 
 Symbol: psev
    Definitions
-      At line 281 in file main.s
+      At line 329 in file main.s
 
 
 
@@ -35279,63 +35373,63 @@ ARM Macro Assembler    Page 5 Alphabetic symbol ordering
 Relocatable symbols
 
    Uses
-      At line 216 in file main.s
+      At line 264 in file main.s
 Comment: psev used once
 psix 00000276
 
 Symbol: psix
    Definitions
-      At line 269 in file main.s
+      At line 317 in file main.s
    Uses
-      At line 232 in file main.s
+      At line 280 in file main.s
 Comment: psix used once
 pstar 000002B2
 
 Symbol: pstar
    Definitions
-      At line 289 in file main.s
+      At line 337 in file main.s
    Uses
-      At line 218 in file main.s
+      At line 266 in file main.s
 Comment: pstar used once
 pthree 00000264
 
 Symbol: pthree
    Definitions
-      At line 263 in file main.s
+      At line 311 in file main.s
    Uses
-      At line 230 in file main.s
+      At line 278 in file main.s
 Comment: pthree used once
 ptwo 0000026A
 
 Symbol: ptwo
    Definitions
-      At line 265 in file main.s
+      At line 313 in file main.s
    Uses
-      At line 221 in file main.s
+      At line 269 in file main.s
 Comment: ptwo used once
 pzero 000002AC
 
 Symbol: pzero
    Definitions
-      At line 287 in file main.s
+      At line 335 in file main.s
    Uses
-      At line 227 in file main.s
+      At line 275 in file main.s
 Comment: pzero used once
 set 000001B8
 
 Symbol: set
    Definitions
-      At line 199 in file main.s
+      At line 247 in file main.s
    Uses
-      At line 143 in file main.s
+      At line 191 in file main.s
 Comment: set used once
 setTDR 000002C6
 
 Symbol: setTDR
    Definitions
-      At line 297 in file main.s
+      At line 347 in file main.s
    Uses
-      At line 295 in file main.s
+      At line 345 in file main.s
 Comment: setTDR used once
 
 
@@ -35347,39 +35441,39 @@ st 000000F8
 
 Symbol: st
    Definitions
-      At line 131 in file main.s
+      At line 179 in file main.s
    Uses
-      At line 156 in file main.s
-      At line 207 in file main.s
-      At line 219 in file main.s
-      At line 228 in file main.s
-      At line 237 in file main.s
-      At line 246 in file main.s
-      At line 299 in file main.s
+      At line 204 in file main.s
+      At line 255 in file main.s
+      At line 267 in file main.s
+      At line 276 in file main.s
+      At line 285 in file main.s
+      At line 294 in file main.s
+      At line 349 in file main.s
 
 write 000002B8
 
 Symbol: write
    Definitions
-      At line 291 in file main.s
+      At line 341 in file main.s
    Uses
-      At line 260 in file main.s
-      At line 262 in file main.s
-      At line 264 in file main.s
-      At line 266 in file main.s
-      At line 268 in file main.s
-      At line 270 in file main.s
-      At line 272 in file main.s
-      At line 274 in file main.s
-      At line 276 in file main.s
-      At line 278 in file main.s
-      At line 280 in file main.s
-      At line 282 in file main.s
-      At line 284 in file main.s
-      At line 286 in file main.s
-      At line 288 in file main.s
-      At line 290 in file main.s
-      At line 296 in file main.s
+      At line 308 in file main.s
+      At line 310 in file main.s
+      At line 312 in file main.s
+      At line 314 in file main.s
+      At line 316 in file main.s
+      At line 318 in file main.s
+      At line 320 in file main.s
+      At line 322 in file main.s
+      At line 324 in file main.s
+      At line 326 in file main.s
+      At line 328 in file main.s
+      At line 330 in file main.s
+      At line 332 in file main.s
+      At line 334 in file main.s
+      At line 336 in file main.s
+      At line 338 in file main.s
+      At line 346 in file main.s
 
 37 symbols
 
@@ -62628,12 +62722,12 @@ Symbol: GPIOA_BASE
    Definitions
       At line 961 in file stm32l476xx_constants.s
    Uses
-      At line 121 in file main.s
-      At line 138 in file main.s
-      At line 167 in file main.s
-      At line 176 in file main.s
-      At line 184 in file main.s
-      At line 192 in file main.s
+      At line 130 in file main.s
+      At line 186 in file main.s
+      At line 215 in file main.s
+      At line 224 in file main.s
+      At line 232 in file main.s
+      At line 240 in file main.s
 
 GPIOB_BASE 48000400
 
@@ -62657,7 +62751,7 @@ Symbol: GPIOD_BASE
    Definitions
       At line 964 in file stm32l476xx_constants.s
    Uses
-      At line 61 in file main.s
+      At line 65 in file main.s
 Comment: GPIOD_BASE used once
 GPIOE_BASE 48001000
 
@@ -62665,9 +62759,9 @@ Symbol: GPIOE_BASE
    Definitions
       At line 965 in file stm32l476xx_constants.s
    Uses
-      At line 105 in file main.s
-      At line 131 in file main.s
-      At line 199 in file main.s
+      At line 114 in file main.s
+      At line 179 in file main.s
+      At line 247 in file main.s
 
 GPIOF_BASE 48001400
 
@@ -62705,8 +62799,8 @@ Symbol: GPIO_AFR0
    Definitions
       At line 382 in file stm32l476xx_constants.s
    Uses
-      At line 66 in file main.s
-      At line 68 in file main.s
+      At line 70 in file main.s
+      At line 72 in file main.s
 
 GPIO_AFR1 00000024
 
@@ -63452,11 +63546,11 @@ Symbol: GPIO_IDR
    Definitions
       At line 378 in file stm32l476xx_constants.s
    Uses
-      At line 139 in file main.s
-      At line 168 in file main.s
-      At line 177 in file main.s
-      At line 185 in file main.s
-      At line 193 in file main.s
+      At line 187 in file main.s
+      At line 216 in file main.s
+      At line 225 in file main.s
+      At line 233 in file main.s
+      At line 241 in file main.s
 
 GPIO_IDR_IDR_0 00000001
 
@@ -63766,12 +63860,12 @@ Symbol: GPIO_MODER
    Definitions
       At line 374 in file stm32l476xx_constants.s
    Uses
-      At line 62 in file main.s
-      At line 65 in file main.s
-      At line 106 in file main.s
-      At line 109 in file main.s
-      At line 122 in file main.s
-      At line 124 in file main.s
+      At line 66 in file main.s
+      At line 69 in file main.s
+      At line 115 in file main.s
+      At line 118 in file main.s
+      At line 131 in file main.s
+      At line 133 in file main.s
 
 GPIO_MODER_MODER0 00000003
 
@@ -64205,10 +64299,10 @@ Symbol: GPIO_ODR
    Definitions
       At line 379 in file stm32l476xx_constants.s
    Uses
-      At line 132 in file main.s
-      At line 134 in file main.s
-      At line 200 in file main.s
-      At line 205 in file main.s
+      At line 180 in file main.s
+      At line 182 in file main.s
+      At line 248 in file main.s
+      At line 253 in file main.s
 
 GPIO_ODR_ODR_0 00000001
 
@@ -64782,8 +64876,8 @@ Symbol: GPIO_OSPEEDR
    Definitions
       At line 376 in file stm32l476xx_constants.s
    Uses
-      At line 69 in file main.s
-      At line 71 in file main.s
+      At line 73 in file main.s
+      At line 75 in file main.s
 
 GPIO_OTYPER 00000004
 
@@ -64791,8 +64885,8 @@ Symbol: GPIO_OTYPER
    Definitions
       At line 375 in file stm32l476xx_constants.s
    Uses
-      At line 72 in file main.s
-      At line 75 in file main.s
+      At line 76 in file main.s
+      At line 79 in file main.s
 
 GPIO_OTYPER_IDR_0 00000001
 
@@ -65226,12 +65320,12 @@ Absolute symbols
    Definitions
       At line 377 in file stm32l476xx_constants.s
    Uses
-      At line 76 in file main.s
-      At line 78 in file main.s
-      At line 111 in file main.s
-      At line 113 in file main.s
-      At line 126 in file main.s
-      At line 129 in file main.s
+      At line 80 in file main.s
+      At line 82 in file main.s
+      At line 120 in file main.s
+      At line 122 in file main.s
+      At line 135 in file main.s
+      At line 138 in file main.s
 
 GPIO_PUPDR_PUPDR0 00000003
 
@@ -73392,12 +73486,12 @@ Symbol: RCC_AHB2ENR
    Definitions
       At line 511 in file stm32l476xx_constants.s
    Uses
-      At line 50 in file main.s
-      At line 52 in file main.s
-      At line 101 in file main.s
-      At line 103 in file main.s
-      At line 117 in file main.s
-      At line 119 in file main.s
+      At line 54 in file main.s
+      At line 56 in file main.s
+      At line 110 in file main.s
+      At line 112 in file main.s
+      At line 126 in file main.s
+      At line 128 in file main.s
 
 RCC_AHB2ENR_ADCEN 00002000
 
@@ -73419,7 +73513,7 @@ Symbol: RCC_AHB2ENR_GPIOAEN
    Definitions
       At line 5259 in file stm32l476xx_constants.s
    Uses
-      At line 118 in file main.s
+      At line 127 in file main.s
 Comment: RCC_AHB2ENR_GPIOAEN used once
 RCC_AHB2ENR_GPIOBEN 00000002
 
@@ -73443,7 +73537,7 @@ Symbol: RCC_AHB2ENR_GPIODEN
    Definitions
       At line 5262 in file stm32l476xx_constants.s
    Uses
-      At line 51 in file main.s
+      At line 55 in file main.s
 Comment: RCC_AHB2ENR_GPIODEN used once
 RCC_AHB2ENR_GPIOEEN 00000010
 
@@ -73451,7 +73545,7 @@ Symbol: RCC_AHB2ENR_GPIOEEN
    Definitions
       At line 5263 in file stm32l476xx_constants.s
    Uses
-      At line 102 in file main.s
+      At line 111 in file main.s
 Comment: RCC_AHB2ENR_GPIOEEN used once
 RCC_AHB2ENR_GPIOFEN 00000020
 
@@ -73807,8 +73901,8 @@ Symbol: RCC_APB1ENR1
    Definitions
       At line 514 in file stm32l476xx_constants.s
    Uses
-      At line 54 in file main.s
-      At line 56 in file main.s
+      At line 58 in file main.s
+      At line 60 in file main.s
 
 RCC_APB1ENR1_CAN1EN 02000000
 
@@ -73980,7 +74074,7 @@ Symbol: RCC_APB1ENR1_USART2EN
    Definitions
       At line 5286 in file stm32l476xx_constants.s
    Uses
-      At line 55 in file main.s
+      At line 59 in file main.s
 Comment: RCC_APB1ENR1_USART2EN used once
 RCC_APB1ENR1_USART3EN 00040000
 
@@ -74864,11 +74958,11 @@ Symbol: RCC_BASE
    Definitions
       At line 934 in file stm32l476xx_constants.s
    Uses
-      At line 25 in file main.s
-      At line 49 in file main.s
+      At line 26 in file main.s
       At line 53 in file main.s
-      At line 100 in file main.s
-      At line 116 in file main.s
+      At line 57 in file main.s
+      At line 109 in file main.s
+      At line 125 in file main.s
 
 RCC_BDCR 00000090
 
@@ -75442,8 +75536,8 @@ Symbol: RCC_CFGR
    Definitions
       At line 494 in file stm32l476xx_constants.s
    Uses
-      At line 29 in file main.s
-      At line 31 in file main.s
+      At line 30 in file main.s
+      At line 32 in file main.s
 
 RCC_CFGR_HPRE 000000F0
 
@@ -75831,7 +75925,7 @@ Symbol: RCC_CFGR_SW
    Definitions
       At line 5000 in file stm32l476xx_constants.s
    Uses
-      At line 30 in file main.s
+      At line 31 in file main.s
 Comment: RCC_CFGR_SW used once
 RCC_CFGR_SWS 0000000C
 
@@ -76235,11 +76329,11 @@ Symbol: RCC_CR
    Definitions
       At line 492 in file stm32l476xx_constants.s
    Uses
-      At line 26 in file main.s
-      At line 28 in file main.s
-      At line 33 in file main.s
-      At line 37 in file main.s
+      At line 27 in file main.s
+      At line 29 in file main.s
+      At line 34 in file main.s
       At line 41 in file main.s
+      At line 45 in file main.s
 
 RCC_CR_CSSON 00080000
 
@@ -76317,7 +76411,7 @@ Symbol: RCC_CR_MSION
    Definitions
       At line 4919 in file stm32l476xx_constants.s
    Uses
-      At line 27 in file main.s
+      At line 28 in file main.s
 Comment: RCC_CR_MSION used once
 RCC_CR_MSIPLLEN 00000004
 
@@ -76339,7 +76433,7 @@ ARM Macro Assembler    Page 631 Alphabetic symbol ordering
 Absolute symbols
 
    Uses
-      At line 34 in file main.s
+      At line 35 in file main.s
 Comment: RCC_CR_MSIRANGE used once
 RCC_CR_MSIRANGE_0 00000000
 
@@ -76425,7 +76519,7 @@ Symbol: RCC_CR_MSIRANGE_7
    Definitions
       At line 4933 in file stm32l476xx_constants.s
    Uses
-      At line 35 in file main.s
+      At line 36 in file main.s
 Comment: RCC_CR_MSIRANGE_7 used once
 RCC_CR_MSIRANGE_8 00000080
 
@@ -76449,7 +76543,7 @@ Symbol: RCC_CR_MSIRDY
    Definitions
       At line 4920 in file stm32l476xx_constants.s
    Uses
-      At line 42 in file main.s
+      At line 46 in file main.s
 Comment: RCC_CR_MSIRDY used once
 RCC_CR_MSIRGSEL 00000008
 
@@ -76457,7 +76551,7 @@ Symbol: RCC_CR_MSIRGSEL
    Definitions
       At line 4922 in file stm32l476xx_constants.s
    Uses
-      At line 36 in file main.s
+      At line 40 in file main.s
 Comment: RCC_CR_MSIRGSEL used once
 RCC_CR_PLLON 01000000
 
@@ -93942,9 +94036,9 @@ Symbol: USART2_BASE
    Definitions
       At line 876 in file stm32l476xx_constants.s
    Uses
-      At line 80 in file main.s
-      At line 291 in file main.s
-      At line 297 in file main.s
+      At line 89 in file main.s
+      At line 341 in file main.s
+      At line 347 in file main.s
 
 USART2_IRQn 00000026
 
@@ -93982,7 +94076,7 @@ Symbol: USART_BRR
    Definitions
       At line 714 in file stm32l476xx_constants.s
    Uses
-      At line 91 in file main.s
+      At line 100 in file main.s
 Comment: USART_BRR used once
 USART_BRR_DIV_FRACTION 0000000F
 
@@ -94006,10 +94100,10 @@ Symbol: USART_CR1
    Definitions
       At line 711 in file stm32l476xx_constants.s
    Uses
-      At line 81 in file main.s
-      At line 84 in file main.s
-      At line 92 in file main.s
-      At line 97 in file main.s
+      At line 90 in file main.s
+      At line 93 in file main.s
+      At line 101 in file main.s
+      At line 106 in file main.s
 
 USART_CR1_CMIE 00004000
 
@@ -94155,7 +94249,7 @@ Symbol: USART_CR1_M
    Definitions
       At line 7695 in file stm32l476xx_constants.s
    Uses
-      At line 82 in file main.s
+      At line 91 in file main.s
 Comment: USART_CR1_M used once
 USART_CR1_M0 00001000
 
@@ -94187,7 +94281,7 @@ Symbol: USART_CR1_OVER8
    Definitions
       At line 7699 in file stm32l476xx_constants.s
    Uses
-      At line 83 in file main.s
+      At line 92 in file main.s
 Comment: USART_CR1_OVER8 used once
 USART_CR1_PCE 00000400
 
@@ -94225,7 +94319,7 @@ Symbol: USART_CR1_RE
    Definitions
       At line 7685 in file stm32l476xx_constants.s
    Uses
-      At line 94 in file main.s
+      At line 103 in file main.s
 Comment: USART_CR1_RE used once
 USART_CR1_RTOIE 04000000
 
@@ -94257,7 +94351,7 @@ Symbol: USART_CR1_TE
    Definitions
       At line 7686 in file stm32l476xx_constants.s
    Uses
-      At line 95 in file main.s
+      At line 104 in file main.s
 Comment: USART_CR1_TE used once
 USART_CR1_TXEIE 00000080
 
@@ -94279,7 +94373,7 @@ ARM Macro Assembler    Page 907 Alphabetic symbol ordering
 Absolute symbols
 
    Uses
-      At line 93 in file main.s
+      At line 102 in file main.s
 Comment: USART_CR1_UE used once
 USART_CR1_UESM 00000002
 
@@ -94303,8 +94397,8 @@ Symbol: USART_CR2
    Definitions
       At line 712 in file stm32l476xx_constants.s
    Uses
-      At line 85 in file main.s
-      At line 87 in file main.s
+      At line 94 in file main.s
+      At line 96 in file main.s
 
 USART_CR2_ABREN 00100000
 
@@ -94460,7 +94554,7 @@ Symbol: USART_CR2_STOP
    Definitions
       At line 7724 in file stm32l476xx_constants.s
    Uses
-      At line 86 in file main.s
+      At line 95 in file main.s
 Comment: USART_CR2_STOP used once
 USART_CR2_STOP_0 00001000
 
@@ -94870,7 +94964,7 @@ Symbol: USART_ISR
    Definitions
       At line 720 in file stm32l476xx_constants.s
    Uses
-      At line 292 in file main.s
+      At line 342 in file main.s
 Comment: USART_ISR used once
 USART_ISR_ABRE 00004000
 
@@ -95050,8 +95144,8 @@ Symbol: USART_ISR_TXE
    Definitions
       At line 7794 in file stm32l476xx_constants.s
    Uses
-      At line 293 in file main.s
-      At line 294 in file main.s
+      At line 343 in file main.s
+      At line 344 in file main.s
 
 
 
@@ -95205,7 +95299,7 @@ Symbol: USART_TDR
    Definitions
       At line 724 in file stm32l476xx_constants.s
    Uses
-      At line 298 in file main.s
+      At line 348 in file main.s
 Comment: USART_TDR used once
 USART_TDR_TDR 000001FF
 

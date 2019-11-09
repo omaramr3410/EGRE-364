@@ -21,7 +21,8 @@
 	ENTRY			
 				
 __main	PROC
-	
+
+	; Select MSI as the clock source of System Clock
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_CR]
 	ORR r1, r1, #RCC_CR_MSION
@@ -29,13 +30,16 @@ __main	PROC
 	LDR r1, [r0, #RCC_CFGR]
 	BIC r1, r1, #RCC_CFGR_SW
 	STR r1, [r0, #RCC_CFGR]
-	BL msiwait
+	BL msiwait ; Wait until MSI is ready
 	LDR r2, [r0, #RCC_CR]
 	BIC r2, r2, #RCC_CR_MSIRANGE
-	ORR r2, r2, #RCC_CR_MSIRANGE_7
+	ORR r2, r2, #RCC_CR_MSIRANGE_7 ; MSIRANGE can be modified when MSI is OFF (MSION=0) or when MSI is ready (MSIRDY=1).
+	; The MSIRGSEL bit in RCC-CR select which MSIRANGE is used. 
+	; If MSIRGSEL is 0, the MSIRANGE in RCC_CSR is used to select the MSI clock range.  (This is the default)
+	; If MSIRGSEL is 1, the MSIRANGE in RCC_CR is used. 
 	ORR r2, r2, #RCC_CR_MSIRGSEL
 	STR r2, [r0, #RCC_CR]
-	BL msiwait
+	BL msiwait ; Enable MSI and wait until it's ready	
 	B cont
 	
 msiwait	LDR  r1, [r0, #RCC_CR]
@@ -52,7 +56,7 @@ cont
 	STR r1, [r0, #RCC_AHB2ENR]
 	LDR r0, =RCC_BASE
 	LDR r1, [r0, #RCC_APB1ENR1]
-	ORR r1, r1, #RCC_APB1ENR1_USART2EN
+	ORR r1, r1, #RCC_APB1ENR1_USART2EN  ; Enable the clock of USART 2
 	STR r1, [r0, #RCC_APB1ENR1]
 	
 
@@ -60,30 +64,35 @@ cont
     ;       10: Alternate function mode, 11: Analog mode (reset state)
 	LDR r0, =GPIOD_BASE
 	LDR r1, [r0, #GPIO_MODER]
-	BIC r1, r1, #(0x0F<<(2*5))
-	ORR r1, r1, #(0x0A<<(2*5))
+	BIC r1, r1, #(0x0F<<(2*5))   ; Clear bits for PD5,PD6
+	ORR r1, r1, #(0x0A<<(2*5))  ; Input(00, reset), Output(01), AlterFunc(10), Analog(11)
 	STR r1, [r0, #GPIO_MODER]
-	LDR r1, [r0, #GPIO_AFR0]
-	ORR r1, r1, #(0x77<<(4*5))
+	LDR r1, [r0, #GPIO_AFR0]  ; GPIOD->AFR[0] for PIN.0 - PIN.7
+	ORR r1, r1, #(0x77<<(4*5)) ;AF7(USART1..3)
 	STR r1, [r0, #GPIO_AFR0]
 	LDR r1, [r0, #GPIO_OSPEEDR]
-	ORR r1, r1, #(0x0F<<(2*5))
+	ORR r1, r1, #(0x0F<<(2*5))  ; 400 KHz(00), 2 MHz(01), 10 MHz(01), 40 MHz (11)
 	STR r1, [r0, #GPIO_OSPEEDR]
 	LDR r1, [r0, #GPIO_OTYPER]
-	BIC r1, r1, #(0x01<<5)
-	ORR r1, r1, #(0x01<<6)
-	STR r1, [r0, #GPIO_OTYPER]
+	BIC r1, r1, #(0x01<<5)   ; TX pin (PD.5) should be set up as a push-pull output
+	ORR r1, r1, #(0x01<<6)  ; RX pin (PD.6) is a floating input
+	STR r1, [r0, #GPIO_OTYPER] 
 	LDR r1, [r0, #GPIO_PUPDR]
-	BIC r1, r1, #(0x0F<<(2*5))
+	BIC r1, r1, #(0x0F<<(2*5))  ;No pull-up/pull-down
 	STR r1, [r0, #GPIO_PUPDR]
 	
+
+	; Default setting: No hardware flow control, 8 data bits, no parity, and one stop bit		
+	;USARTx->BRR   = 8000000/9600;					 						
+	; BRR = System Frequency/BAUDRATE
+	; Configure word length to 8 bit. 00=8 bits, 01=9 bits, 10=7 bits
 	LDR r0, = USART2_BASE
 	LDR r1, [r0, #USART_CR1]
 	BIC r1, r1, #USART_CR1_M
-	BIC r1, r1, #USART_CR1_OVER8
+	BIC r1, r1, #USART_CR1_OVER8 ; Configure oversampling to x16
 	STR r1, [r0, #USART_CR1]
 	LDR r1, [r0, #USART_CR2]
-	BIC r1, r1, #USART_CR2_STOP
+	BIC r1, r1, #USART_CR2_STOP ; Configure stop bits to 1 stop bit
 	STR r1, [r0, #USART_CR2]
 	LDR r2, = 8000000
 	LDR r3, = 9600
@@ -92,9 +101,9 @@ cont
 	LDR r1, [r0, #USART_CR1]
 	ORR r1, r1, #USART_CR1_UE
 	LDR r2, = USART_CR1_RE
-	ORR r2, r2, #USART_CR1_TE
+	ORR r2, r2, #USART_CR1_TE ; Transmitter and Receiver enable
 	ORR r1, r1, r2
-	STR r1, [r0, #USART_CR1]
+	STR r1, [r0, #USART_CR1] ; USART2 enable
 	
 	; Enable the clock to GPIO Port E	
 	LDR r0, =RCC_BASE
@@ -127,6 +136,45 @@ cont
 	BIC r1, r1, #(0xFF)
 	ORR r1, r1, #(0xAA)
 	STR r1, [r0, #GPIO_PUPDR]
+; Algorithum For KEY pad Scan
+; Start:
+; 
+; SET ROW1 * SET MEANS HIGH * CLEAR MEANS LOW
+; 
+; CHECK IF COL#1 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number1
+; 
+; IF NOT, CHECK IF COL#2 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number4
+; 
+; IF NOT, CHECK IF COL#3 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number7
+; 
+; IF NOT, CHECK IF COL#4 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR star
+; 
+; IF NOT, CLEAR ROW1 AND SET ROW2 
+; CHECK IF COL#1 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number2
+; 
+; IF NOT, CHECK IF COL#2 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number5
+; 
+; IF NOT, CHECK IF COL#3 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number8
+; 
+; IF NOT, CHECK IF COL#4 IS HIGH
+; 
+; IF SO, GOTO INSTRUCTION FOR Number0
+; 
+; IF NOT, CLEAR ROW2 AND SET ROW3 
 	
 st	LDR r2, =GPIOE_BASE     
 	LDR r3, [r2, #GPIO_ODR]
@@ -288,14 +336,16 @@ pzero	LDR r12, =0x30
 	B write
 pstar	LDR r12, =0x2A
 	B write	
+
+	; wait until TXE (TX empty) bit is set 
 write	LDR r0, = USART2_BASE
 		LDR r1, [r0, #USART_ISR]
 		AND r1, r1, #USART_ISR_TXE
-		CMP r1, #USART_ISR_TXE
+		CMP r1, #USART_ISR_TXE    
 		BEQ setTDR
 		BNE write
 setTDR	LDR r0, = USART2_BASE
-		STR r12, [r0, #USART_TDR]
+		STR r12, [r0, #USART_TDR] ; set TDR when TXE bit is 0
 		B st
 	ENDP
 
