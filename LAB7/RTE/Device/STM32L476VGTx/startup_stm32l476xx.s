@@ -1,32 +1,8 @@
-;******************** (C) Yifeng ZHU *******************************************
-; @file    startup_stm32l476xx.s
-; @author  Yifeng Zhu
-; @version V2.1.0
-; @date    May-17-2015
-; @note    
-; @brief   This is a modified startup code to support Assembly Programs without
-;          using libraries. Key changes include:
-;		   (1) Remove the call of SystemInit()
-;		   (2) Add codes to initialize memory. 
-;			   Copy the Read/Write data section (RW) and the Zero Initialized 
-;			   section (ZI) from the flash to RAM
-;          (3) Enable FPU
-; @note
-;           This code is for the book "Embedded Systems with ARM Cortex-M 
-;           Microcontrollers in Assembly Language and C, Yifeng Zhu, 
-;           ISBN-13: 978-0982692639, ISBN-10: 0982692633
-; @attension
-;           This code is provided for education purpose. The author shall not be 
-;           held liable for any direct, indirect or consequential damages, for any 
-;           reason whatever. More information can be found from book website: 
-;           http://www.eece.maine.edu/~zhu/book
-;*******************************************************************************
-
 ;******************** (C) COPYRIGHT 2015 STMicroelectronics ********************
 ;* File Name          : startup_stm32l476xx.s
 ;* Author             : MCD Application Team
-;* Version            : V1.0.1
-;* Date               : 16-September-2015
+;* Version            : V1.0.0
+;* Date               : 26-June-2015
 ;* Description        : STM32L476xx Ultra Low Power devices vector table for MDK-ARM toolchain.
 ;*                      This module performs:
 ;*                      - Set the initial SP
@@ -69,43 +45,7 @@
 ;   <o> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
 
-;******************** Added by Dr. Zhu *****************************************************
-                ; ROM:  Symbols defined by the linker
-                IMPORT  |Load$$ER_IROM1$$Base|             ; Entry of Bootloader
-                
-                IMPORT  |Image$$ER_IROM1$$RO$$Base|        ; Start of RO output section
-                IMPORT  |Image$$ER_IROM1$$RO$$Limit|       ; First byte beyond the end of RO output section
-                IMPORT  |Image$$ER_IROM1$$RO$$Length|      ; Size of RO output section
-                
-                IMPORT  |Image$$ER_IROM1$$RW$$Base|
-                IMPORT  |Image$$ER_IROM1$$RW$$Length|
-                IMPORT  |Image$$ER_IROM1$$RW$$Limit|
-                
-                IMPORT  |Image$$ER_IROM1$$ZI$$Base|
-                IMPORT  |Image$$ER_IROM1$$ZI$$Length|
-                IMPORT  |Image$$ER_IROM1$$ZI$$Limit|
-                
-                ; RAM: Symbols defined by the linker
-                IMPORT  |Load$$RW_IRAM1$$Base|             ; Load Address 
-                IMPORT  |Image$$RW_IRAM1$$Base|            ; Start of RW output section
-                IMPORT  |Image$$RW_IRAM1$$Length|
-                IMPORT  |Image$$RW_IRAM1$$Limit|
-                
-                IMPORT  |Image$$RW_IRAM1$$RO$$Base|
-                IMPORT  |Image$$RW_IRAM1$$RO$$Base|
-                IMPORT  |Image$$RW_IRAM1$$RO$$Length|        
-                
-                IMPORT  |Image$$RW_IRAM1$$RW$$Base|       ; Start of RW output section
-                IMPORT  |Image$$RW_IRAM1$$RW$$Limit|      ; End of RW output section
-                IMPORT  |Image$$RW_IRAM1$$RW$$Length|     ; Size of RW output section
-                
-                IMPORT  |Image$$RW_IRAM1$$ZI$$Base|       ; Start of ZI output section
-                IMPORT  |Image$$RW_IRAM1$$ZI$$Limit|      ; End of ZI output section
-                IMPORT  |Image$$RW_IRAM1$$ZI$$Length|     ; Size of ZI output section
-;******************** END ************************************************************************
-
-
-Stack_Size      EQU     0x1000;
+Stack_Size      EQU     0x400;
 
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
 Stack_Mem       SPACE   Stack_Size
@@ -116,7 +56,7 @@ __initial_sp
 ;   <o>  Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
 
-Heap_Size       EQU     0x500;
+Heap_Size       EQU     0x200;
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
@@ -243,46 +183,11 @@ __Vectors_Size  EQU  __Vectors_End - __Vectors
 ; Reset handler
 Reset_Handler    PROC
                  EXPORT  Reset_Handler             [WEAK]
-                 ; IMPORT  SystemInit      ; Removed by Zhu
-                 IMPORT  __main
+        IMPORT  SystemInit
+        IMPORT  __main
 
-;******************** Removed by Dr. Zhu ***************************************************			
-				; IMPORT  SystemInit  
-                ; LDR     R0, =SystemInit  ; Commented out by ZHU
-                ; BLX     R0               ; Commented out by ZHU
-				 
-;******************** Added by Dr. Zhu *****************************************************
-				 ; Copy the RW Data from Flash to RAM 
-				 LDR	r0,	=|Image$$ER_IROM1$$RO$$Limit|
-				 LDR	r1,	=|Image$$RW_IRAM1$$RW$$Base|
-				 LDR	r3,	=|Image$$RW_IRAM1$$ZI$$Base|
-Copy_RW			 CMP	r1,	r3
-				 LDRCC r2, [r0], #4
-				 STRCC r2, [r1], #4
-				 BCC	Copy_RW
-		
-				 ; Copy the ZI Data from Flash to RAM
-				 LDR	r1,	=|Image$$RW_IRAM1$$ZI$$Limit|
-				 MOV	r2,	#0
-Initialize_ZI	 CMP	r3,	r1
-				 STRCC r2, [r3], #4
-				 BCC	Initialize_ZI
-
-				 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-				 ; Enable FPU
-				 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-				 ; CPACR is located at address 0xE000ED88
-				 LDR.W   R0, =0xE000ED88
-				 ; Read CPACR
-				 LDR     R1, [R0]
-				 ; Set bits 20-23 to enable CP10 and CP11 coprocessors
-				 ORR     R1, R1, #(0xF << 20)
-				 ; Write back the modified value to the CPACR
-				 STR     R1, [R0]; wait for store to complete
-				 DSB
-				 ;reset pipeline now the FPU is enabled
-				 ISB
-;******************** END ********************************************************************
+                 LDR     R0, =SystemInit
+                 BLX     R0
                  LDR     R0, =__main
                  BX      R0
                  ENDP
