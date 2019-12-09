@@ -1,0 +1,10 @@
+.\objects\adc.o: ..\..\..\..\..\..\STM32L476G_ADC\STM32L476G_ADC\ADC.c
+.\objects\adc.o: ..\..\..\..\..\..\STM32L476G_ADC\STM32L476G_ADC\ADC.h
+.\objects\adc.o: ..\..\..\..\..\..\STM32L476G_ADC\STM32L476G_ADC\stm32l476xx.h
+.\objects\adc.o: C:\Users\sonic\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm4.h
+.\objects\adc.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\adc.o: C:\Users\sonic\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h
+.\objects\adc.o: C:\Users\sonic\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h
+.\objects\adc.o: C:\Users\sonic\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h
+.\objects\adc.o: C:\Users\sonic\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\mpu_armv7.h
+.\objects\adc.o: C:\Users\sonic\AppData\Local\Arm\Packs\Keil\STM32L4xx_DFP\2.2.0\Drivers\CMSIS\Device\ST\STM32L4xx\Include\system_stm32l4xx.h
