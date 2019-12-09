@@ -85,8 +85,15 @@ void System_Clock_Init(void);
 void Bars();
 void random(void);
 void readReflectance();
+void readDistance();
 
 int main(void){
+
+	int32_t result = 0;
+	int result2, factor, tens = 0;
+	float deci = 0;
+	float voltage =0;
+	int distance = 0;
 	
 	System_Clock_Init();
 	SysTick_Init();
@@ -96,21 +103,12 @@ int main(void){
 	LCD_Clear();
 	LCD_bar();
 	
-	int32_t result = 0;
-	int result2, factor = 0;
-	float deci = 0;
-	int tens =0;
-	float voltage =0;
-	int distance = 0;
-	
 	while(1){
 	
 	readReflectance(); // reads in two sensors
-	
-	Bars();
-	delay(600);
-		
-		
+	readDistance(); // read distance sensors, set 
+	Bars(); // set bars based on distance
+	delay(600); // delay for 600 ms
 	}
 }
 
