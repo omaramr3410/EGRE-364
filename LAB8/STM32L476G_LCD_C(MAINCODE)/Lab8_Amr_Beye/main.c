@@ -82,10 +82,10 @@ int thecount = 0;
 int calculateddistance = 0;
 void PE_Init(void);
 void System_Clock_Init(void);
-void Bars();
+void Bars(void);
 void random(void);
-void readReflectance();
-void readDistance();
+void readReflectance(void);
+void readDistance(void);
 
 int main(void){
 
@@ -112,14 +112,11 @@ int main(void){
 	}
 }
 
-void readDistance(){
+void readDistance(void){
 	
 	int32_t result = 0;
-	int result2, factor = 0;
 	float deci = 0;
-	int tens =0;
-	float voltage =0;
-	int distance = 0;	
+	float voltage =0;	
 	
 	ADC1->CR |= ADC_CR_ADSTART;			
 	while ( (ADC123_COMMON->CSR | ADC_CSR_EOC_MST) == 0);
@@ -183,7 +180,7 @@ void readReflectance(void){
 
 }
 
-void Bars(){
+void Bars(void){
 		
 		// TO wait LCD Ready *
   while ((LCD->SR & LCD_SR_UDR) != 0); // Wait for Update Display Request Bit
