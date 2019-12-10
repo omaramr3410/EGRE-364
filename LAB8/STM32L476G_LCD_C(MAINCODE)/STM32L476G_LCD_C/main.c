@@ -106,7 +106,7 @@ int main(void){
 	while(1){
 	
 	readReflectance(); // reads in two sensors
-	readDistance(); // read distance sensors, set 
+	readDistance(); // read distance sensors, set global distance for Bars
 	Bars(); // set bars based on distance
 	delay(600); // delay for 600 ms
 	}
@@ -128,7 +128,7 @@ void readDistance(){
 	voltage = deci;
 	
 	voltage = 38.765/(voltage + 0.0547);
-	calculateddistance = voltage -2;
+	calculateddistance = voltage - 2;
 	
 	if(voltage > 50) voltage = 50;
 	char resultr[50]; 
@@ -140,10 +140,9 @@ void readDistance(){
 
 void readReflectance(void){
 
-	
 	int32_t counter=0;
 	int32_t counter2=0;
-	int32_t threshold = (0x2000)/0.5 ;//0x20000/0.;
+	int32_t threshold = (0x2000)/0.5 ;// basically 0x4000
 	
 			
 		GPIOE->MODER |= 1U<<(2*15);      //  Output(01)	
@@ -153,19 +152,16 @@ void readReflectance(void){
 		GPIOE->ODR &= ~(1U<<15); // set output for PE15 to 1
 		GPIOE->ODR |=1U<<15;
 		
-		//GPIOE->ODR &= ~(1U<<14); // output 1 to PE14
-		//GPIOE->ODR |=1U<<14;
-	
-		delay(100);
+		delay(100);// wait 100ms to charge capacitor
 				
 		GPIOE->MODER &= ~(3U<<(2*15)); //pe15 as input
 	
-		while (GPIOE->IDR & 0x8000) counter++;
+		while (GPIOE->IDR & 0x8000) counter++; // count while capacitor is discharging, higher than threshold means Black otherwise White
 		
 		if (counter>threshold)
-			LCD_WriteChar((uint8_t*)"B",0,0,3);
+			LCD_WriteChar((uint8_t*)"B",0,0,3);// displays sensor #2, when above threshold and low reflectance
 		else
-			LCD_WriteChar((uint8_t*)"W",0,0,3);//LCD_WriteChar((uint8_t*)"W",0,0,1);
+			LCD_WriteChar((uint8_t*)"W",0,0,3);// displays sensor #2, when below threshold
 	
 		
 		GPIOE->ODR &= ~(1U<<14); // output 1 to PE14
@@ -177,7 +173,7 @@ void readReflectance(void){
 		
 		while (GPIOE->IDR & 0x4000) counter2++;
 		
-		if ((counter2)>threshold/1)
+		if ((counter2)>threshold)
 			LCD_WriteChar((uint8_t*)"B",0,0,2);
 		else
 			LCD_WriteChar((uint8_t*)"W",0,0,2);
@@ -265,35 +261,3 @@ void randomDisplay(void){
 		LCD_DisplayString((uint8_t*)part1);
 		delay(8000);
 }
-
-/*
-while(1){
-	
-	readReflectance();
-	ADC1->CR |= ADC_CR_ADSTART;			
-	while ( (ADC123_COMMON->CSR | ADC_CSR_EOC_MST) == 0);
-	result = ADC1->DR;
-	result2 = result;
-	deci = result2;	
-		
-	while(deci){deci = deci/10; factor = factor*10;}
-  while(factor >1){factor = factor/10; tens = result2/factor; }	
-
-	
-	char result[50]; 
-	float num = thecount; 
-	sprintf(result, "%f", num); 
-		
-	char part1[] = "HH:MM:";
-	char sectens[] = "0";
-	if(thecount<10)strcat(part1,sectens);
-	strcat(part1,result);
-		
-	LCD_WriteChar((uint8_t*)"9",0,0,1);
-	//LCD_DisplayString((uint8_t*)part1);
-	delay(1000);
-		
-		
-	
-	}
-*/
